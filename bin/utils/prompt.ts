@@ -1,25 +1,17 @@
 import inquirer from "inquirer";
-import { FrontendComponentType, BackendComponentType, ProjectType } from "../types/enums";
+import { FrontendComponentType, BackendComponentType, ProjectType, ComponentType } from "../types/enums";
 
 /**
  * Prompts user to select component type based on project type
  */
-export async function promptComponentType(projectType: ProjectType): Promise<FrontendComponentType | BackendComponentType> {
-  if (projectType === ProjectType.FRONTEND) {
-    const { componentType } = await inquirer.prompt([{
-      type: "list",
-      name: "componentType",
-      message: "What type of frontend component to create?",
-      choices: Object.values(FrontendComponentType),
-    }]);
-    return componentType as FrontendComponentType;
-  } else {
-    const { componentType } = await inquirer.prompt([{
-      type: "list",
-      name: "componentType",
-      message: "What type of backend component to create?",
-      choices: Object.values(BackendComponentType),
-    }]);
-    return componentType as BackendComponentType;
-  }
+export async function promptComponentType(projectType: ProjectType): Promise<ComponentType> {
+  const { componentType } = await inquirer.prompt([{
+    type: "list",
+    name: "componentType",
+    message: `Select ${projectType} component type:`,
+    choices: projectType === ProjectType.FRONTEND
+      ? Object.values(FrontendComponentType)
+      : Object.values(BackendComponentType)
+  }]);
+  return componentType;
 }
