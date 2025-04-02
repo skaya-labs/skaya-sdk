@@ -11,7 +11,7 @@ class TemplateService {
   }
 
   private loadTemplatesConfig() {
-    const configPath = path.join(__dirname, '../../templates.json');
+    const configPath = path.join(__dirname, './templates.json');
     if (!fs.existsSync(configPath)) {
       throw new Error('Template configuration not found');
     }
