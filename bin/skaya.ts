@@ -1,9 +1,8 @@
 #!/usr/bin/env ts-node
 
 /**
- * @file CLI interface for project scaffolding tool
+ * @file CLI interface for full-stack web3 project scaffolding tool
  * @module cli
- * @version 2.1.0
  * @license MIT
  */
 

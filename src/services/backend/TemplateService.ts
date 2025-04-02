@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import inquirer from 'inquirer';
 
-class TemplateService {
+class BackendTemplateService {
   private templatesConfig: any;
 
   constructor() {
@@ -11,9 +11,9 @@ class TemplateService {
   }
 
   private loadTemplatesConfig() {
-    const configPath = path.join(__dirname, './templates.json');
+    const configPath = path.join(__dirname, '../../templates.json');
     if (!fs.existsSync(configPath)) {
-      throw new Error('Template configuration not found');
+      throw new Error('Backend template configuration not found');
     }
     this.templatesConfig = require(configPath);
   }
@@ -22,17 +22,19 @@ class TemplateService {
     templateType: string;
     customRepo?: string;
   }> {
-    const { category } = await inquirer.prompt([{
-      type: 'list',
-      name: 'category',
-      message: 'Select template category:',
-      choices: Object.keys(this.templatesConfig.categories).map(cat => ({
-        name: this.formatCategoryName(cat),
-        value: cat
-      }))
-    }]);
+    const { category } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'category',
+        message: 'Select backend template category:',
+        choices: Object.keys(this.templatesConfig.backendCategories).map(cat => ({
+          name: this.formatCategoryName(cat),
+          value: cat
+        }))
+      }
+    ]);
 
-    const templatesInCategory = this.templatesConfig.categories[category];
+    const templatesInCategory = this.templatesConfig.backendCategories[category];
     const templateChoices = templatesInCategory.map((t: string) => ({
       name: this.formatTemplateName(t),
       value: t
@@ -45,20 +47,24 @@ class TemplateService {
       });
     }
 
-    const { templateType } = await inquirer.prompt([{
-      type: 'list',
-      name: 'templateType',
-      message: 'Select a template:',
-      choices: templateChoices
-    }]);
+    const { templateType } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'templateType',
+        message: 'Select a backend template:',
+        choices: templateChoices
+      }
+    ]);
 
     if (templateType === 'custom') {
-      const { customRepo } = await inquirer.prompt([{
-        type: 'input',
-        name: 'customRepo',
-        message: 'Enter GitHub repository URL:',
-        validate: (input: string) => !!input.trim() || 'URL cannot be empty'
-      }]);
+      const { customRepo } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'customRepo',
+          message: 'Enter GitHub repository URL:',
+          validate: (input: string) => !!input.trim() || 'URL cannot be empty'
+        }
+      ]);
       return { templateType, customRepo };
     }
 
@@ -68,17 +74,17 @@ class TemplateService {
   public async cloneTemplate(templateType: string, customRepo: string | undefined, targetPath: string): Promise<void> {
     const repoUrl = templateType === 'custom' 
       ? customRepo 
-      : this.templatesConfig.frontend[templateType];
+      : this.templatesConfig.backend[templateType];
 
     try {
-      console.log(`🚀 Cloning ${this.formatTemplateName(templateType)} template...`);
+      console.log(`🚀 Cloning ${this.formatTemplateName(templateType)} backend template...`);
       execSync(`git clone ${repoUrl} ${targetPath}`, { stdio: 'inherit' });
       
       // Cleanup
       await fs.remove(path.join(targetPath, '.git'));
-      console.log(`✅ Successfully initialized project with ${this.formatTemplateName(templateType)} template`);
+      console.log(`✅ Successfully initialized project with ${this.formatTemplateName(templateType)} backend template`);
     } catch (error) {
-      throw new Error(`Failed to clone template: ${error}`);
+      throw new Error(`Failed to clone backend template: ${error}`);
     }
   }
 
@@ -96,4 +102,4 @@ class TemplateService {
   }
 }
 
-export default new TemplateService();
+export default new BackendTemplateService();

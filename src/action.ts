@@ -10,7 +10,8 @@ import path from "path";
 import { BackendComponentType, FrontendComponentType, ProjectType } from "../bin/types/enums";
 import { ICreateComponentParams } from "../bin/types/interfaces";
 import inquirer from "inquirer";
-import TemplateService from "./TemplateService";
+import FrontendTemplateService from "./services/frontend/TemplateService";
+import BackendTemplateService from "./services/backend/TemplateService";
 
 /**
  * Creates a new project scaffold
@@ -40,11 +41,12 @@ export async function createProject(type: ProjectType): Promise<void> {
 
     // Create basic project structure based on type
     if (type === ProjectType.FRONTEND) {
-        const { templateType, customRepo } = await TemplateService.promptTemplateSelection();
-        await TemplateService.cloneTemplate(templateType, customRepo, targetPath);
+        const { templateType, customRepo } = await FrontendTemplateService.promptTemplateSelection();
+        await FrontendTemplateService.cloneTemplate(templateType, customRepo, targetPath);
     } else {
-        await createBackendStructure(targetPath);
-    }
+        const { templateType, customRepo } = await BackendTemplateService.promptTemplateSelection();
+        await BackendTemplateService.cloneTemplate(templateType, customRepo, targetPath);
+   }
 
     console.log(`✅ ${type} project initialized in ${folder}`);
 }
@@ -167,51 +169,6 @@ async function createFrontendStructure(projectPath: string): Promise<void> {
                 "react-dom": "^18.0.0",
             },
         }, null, 2),
-    };
-
-    await createStructure(projectPath, structure);
-}
-
-/**
- * Creates basic backend project structure
- */
-/**
- * Creates basic backend project structure 
- */
-async function createBackendStructure(projectPath: string): Promise<void> {
-    const structure = {
-        'src': {
-            'controllers': {},
-            'routes': {},
-            'middlewares': {},
-            'app.ts': `import express from 'express';\n\nconst app = express();\n\napp.use(express.json());\n\n// Your routes here\n\napp.listen(3000, () => {\n  console.log('Server running on port 3000');\n});\n`,
-        },
-        'package.json': JSON.stringify({
-            name: path.basename(projectPath),
-            version: "1.0.0",
-            scripts: {
-                start: "ts-node src/app.ts",
-                dev: "nodemon src/app.ts",
-            },
-            dependencies: {
-                express: "^4.18.0",
-                "ts-node": "^10.9.1",
-            },
-            devDependencies: {
-                nodemon: "^2.0.20",
-            },
-        }, null, 2),
-        'tsconfig.json': JSON.stringify({
-            compilerOptions: {
-                target: "ES6",
-                module: "CommonJS",
-                outDir: "./dist",
-                rootDir: "./src",
-                strict: true,
-                esModuleInterop: true,
-            },
-        }, null, 2),
-        '.env': `DATABASE_URL="postgresql://user:password@localhost:5432/mydb?schema=public"`
     };
 
     await createStructure(projectPath, structure);

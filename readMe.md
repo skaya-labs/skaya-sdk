@@ -1,6 +1,6 @@
 # Skaya SDK 🚀
 
-Skaya is an advanced CLI toolkit that supercharges your project setup with production-ready templates and interactive scaffolding.
+Skaya is an advanced CLI toolkit that supercharges your full-stack web3 project setup with production-ready templates and interactive scaffolding with Artificial intelligence
 
 ## Features ✨
 
