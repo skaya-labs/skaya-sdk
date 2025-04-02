@@ -1,6 +1,6 @@
 {
   "name": "skaya",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "CLI SDK for initializing frontend, backend, middleware, and routes.",
   "main": "index.js",
   "scripts": {
