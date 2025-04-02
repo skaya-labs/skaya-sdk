@@ -2,7 +2,8 @@
   "name": "skaya",
   "version": "1.0.7",
   "description": "CLI SDK for full-stack automation: scaffold frontend, backend, middleware & routes. Future-ready for Web3, integrations, server components & logging.",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build"
@@ -10,21 +11,61 @@
   "bin": {
     "skaya": "./bin/skaya.ts"
   },
-  "keywords": [],
-  "author": "",
+  "author": "skaya-labs",
   "license": "ISC",
   "dependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/inquirer": "^9.0.7",
     "@types/node": "^22.13.13",
+    "@types/shelljs": "^0.8.15",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "fs-extra": "^11.3.0",
     "inquirer": "^12.5.0",
-    "@types/fs-extra": "^11.0.4",
-    "@types/inquirer": "^9.0.7",
-    "@types/shelljs": "^0.8.15",
-    "ts-node": "^10.9.2",
     "shelljs": "^0.9.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
   },
-  "devDependencies": {}
+  "devDependencies": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/skaya-labs/skaya-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/skaya-labs/skaya-sdk/issues"
+  },
+  "homepage": "https://github.com/skaya-labs/skaya-sdk#readme",
+  "files": [
+    "dist/**/*",
+    "bin/**/*"
+  ],
+  "keywords": [
+    "cli",
+    "sdk",
+    "full-stack",
+    "scaffolding",
+    "web3",
+    "backend",
+    "frontend",
+    "middleware",
+    "automation",
+    "developer-tools",
+    "express",
+    "nodejs",
+    "react",
+    "nextjs",
+    "typescript",
+    "javascript",
+    "server",
+    "components",
+    "logging",
+    "integrations",
+    "routes",
+    "api",
+    "rest",
+    "websockets",
+    "serverless",
+    "cloud"
+  ]
 }
