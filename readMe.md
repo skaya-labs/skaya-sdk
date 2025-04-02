@@ -39,14 +39,20 @@ Initialize a project:
 
 ```bash
 skaya init frontend
-# Interactive template selection will appear
-# Example output:
+# Enter frontend project folder name: frontend-app
 # ? Select template category: (Use arrow keys)
-# ❯ Skaya Official 
-#   Skaya Starter Kits 
-#   Community
+# ❯ Skaya Official
+#  Skaya Starter Kit Frontend
+#  Community
+```
 
 skaya init backend
+```bash
+#  Enter backend project folder name: (backend-app)
+# Select backend template category: (Use arrow keys)
+# ❯ Skaya Official
+#  Skaya Starter Kit Backend
+#  Community
 ```
 
 Create components:
