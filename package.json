@@ -1,9 +1,9 @@
 {
   "name": "skaya",
-  "version": "1.0.7",
+  "version": "1.1.1",
   "description": "CLI SDK for full-stack automation: scaffold frontend, backend, middleware & routes. Future-ready for Web3, integrations, server components & logging.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/action.js",
+  "types": "dist/action.d.ts",
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build"
@@ -68,4 +68,5 @@
     "serverless",
     "cloud"
   ]
+
 }
