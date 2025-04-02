@@ -1,7 +1,7 @@
 {
   "name": "skaya",
   "version": "1.0.6",
-  "description": "CLI SDK for initializing frontend, backend, middleware, and routes.",
+  "description": "CLI SDK for full-stack automation: scaffold frontend, backend, middleware & routes. Future-ready for Web3, integrations, server components & logging.",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
