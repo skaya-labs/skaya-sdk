@@ -1,0 +1,14 @@
+{
+  "frontend": {
+    "skaya-react-ts": "https://github.com/skaya-labs/frontend.git",
+    "skaya-vite-ts": "https://github.com/skaya-labs/skaya-vite-ts-template.git",
+    "skaya-nextjs": "https://github.com/skaya-labs/skaya-nextjs-template.git",
+    "skaya-ecommerce": "https://github.com/skaya-labs/skaya-ecommerce-template.git",
+    "custom": "custom"
+  },
+  "categories": {
+    "skaya-official": ["skaya-react-ts", "skaya-vite-ts", "skaya-nextjs"],
+    "skaya-starter-kits": ["skaya-ecommerce"],
+    "community": ["custom"]
+  }
+}
