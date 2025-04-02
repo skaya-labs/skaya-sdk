@@ -90,10 +90,10 @@ program
           throw new Error(`Invalid project type. Use '${ProjectType.FRONTEND}' or '${ProjectType.BACKEND}'.`);
         }
 
-        if (projectType === ProjectType.FRONTEND && !isValidFrontendComponent(projectType)) {
+        if (projectType === ProjectType.FRONTEND && type && !isValidFrontendComponent(type)) {
           throw new Error(`Invalid frontend component type. Use '${Object.values(FrontendComponentType).join("' or '")}'.`);
         }
-        if (projectType === ProjectType.BACKEND && !isValidBackendComponent(projectType)) {
+        if (projectType === ProjectType.BACKEND && type && !isValidBackendComponent(type)) {
           throw new Error(`Invalid backend component type. Use '${Object.values(BackendComponentType).join("' or '")}'.`);
         }
         componentType = type as ComponentType;

@@ -21,7 +21,6 @@ export enum ProjectType {
     MIDDLEWARE = "middleware",
     ROUTE = "route",
     CONTROLLER = "controller",
-    MODEL = "model"
   }
   
   /**

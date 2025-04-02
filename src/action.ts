@@ -100,8 +100,6 @@ function getDefaultFolder(projectType: ProjectType, componentType: FrontendCompo
             return "src/routes";
         case BackendComponentType.CONTROLLER:
             return "src/controllers";
-        case BackendComponentType.MODEL:
-            return "src/models";
         default:
             return "src";
     }
@@ -137,10 +135,7 @@ function generateTemplate(componentType: FrontendComponentType | BackendComponen
 
         case BackendComponentType.CONTROLLER:
             return `import { Request, Response } from 'express';\n\nexport const ${fileName}Controller = (req: Request, res: Response) => {\n  // Your controller logic\n  res.send('${pascalCaseName} response');\n};\n`;
-
-        case BackendComponentType.MODEL:
-            return `import { Schema, model } from 'mongoose';\n\ninterface I${pascalCaseName} {\n  // Define your model interface\n}\n\nconst ${fileName}Schema = new Schema<I${pascalCaseName}>({\n  // Define your schema\n}, { timestamps: true });\n\nexport const ${pascalCaseName} = model<I${pascalCaseName}>('${pascalCaseName}', ${fileName}Schema);\n`;
-
+     
         default:
             return `// ${pascalCaseName} ${componentType} file\n`;
     }
@@ -181,7 +176,7 @@ async function createFrontendStructure(projectPath: string): Promise<void> {
  * Creates basic backend project structure
  */
 /**
- * Creates basic backend project structure with Prisma instead of models
+ * Creates basic backend project structure 
  */
 async function createBackendStructure(projectPath: string): Promise<void> {
     const structure = {
@@ -191,45 +186,19 @@ async function createBackendStructure(projectPath: string): Promise<void> {
             'middlewares': {},
             'app.ts': `import express from 'express';\n\nconst app = express();\n\napp.use(express.json());\n\n// Your routes here\n\napp.listen(3000, () => {\n  console.log('Server running on port 3000');\n});\n`,
         },
-        'prisma': {
-            'schema.prisma': `// This is your Prisma schema file,
-  // learn more about it in the docs: https://pris.ly/d/prisma-schema
-  
-  generator client {
-    provider = "prisma-client-js"
-  }
-  
-  datasource db {
-    provider = "postgresql" // or mysql, sqlite, etc.
-    url      = env("DATABASE_URL")
-  }
-  
-  // Define your database models here
-  // Example:
-  // model User {
-  //   id    Int     @id @default(autoincrement())
-  //   email String  @unique
-  //   name  String?
-  // }`
-        },
         'package.json': JSON.stringify({
             name: path.basename(projectPath),
             version: "1.0.0",
             scripts: {
                 start: "ts-node src/app.ts",
                 dev: "nodemon src/app.ts",
-                "prisma:generate": "prisma generate",
-                "prisma:migrate": "prisma migrate dev",
-                "prisma:studio": "prisma studio"
             },
             dependencies: {
                 express: "^4.18.0",
                 "ts-node": "^10.9.1",
-                "@prisma/client": "^4.0.0" // or latest version
             },
             devDependencies: {
                 nodemon: "^2.0.20",
-                prisma: "^4.0.0" // or latest version
             },
         }, null, 2),
         'tsconfig.json': JSON.stringify({
