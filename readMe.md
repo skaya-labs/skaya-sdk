@@ -1,41 +1,128 @@
-# Skaya SDK
+# Skaya SDK 🚀
 
-Skaya is a CLI-based SDK that helps you initialize frontend and backend projects, as well as create middleware and routes interactively.
+Skaya is an advanced CLI toolkit that supercharges your project setup with production-ready templates and interactive scaffolding.
 
-## Features
+## Features ✨
 
-- Initialize a frontend or backend project using skaya init frontend or skaya init backend.
+### 🏗️ Project Scaffolding
+- **Frontend Templates**:
+  - `skaya-react-ts` - React + TypeScript
+  - `skaya-vite-ts` - Vite + TypeScript
+  - `skaya-nextjs` - Next.js framework
+  - `skaya-ecommerce` - E-commerce starter
+  - Custom GitHub repositories
 
-- Create middleware files using skaya create middleware.
+- **Backend Templates**:
+  - Express + TypeScript
+  - Prisma ORM integrated
+  - Ready-to-use auth scaffolding
 
-- Create route files using skaya create route.
+### 🧩 Component Generation
+- **Frontend**:
+  - Components (TSX)
+  - Pages (TSX)
 
-- Prompts for file name and folder location before creating middleware or route.
+- **Backend**:
+  - Routes
+  - Controllers
+  - Middlewares
 
-## Installation
+## Installation 📦
 
-1. Install via npm:
+```bash
+npm install -g skaya
 ```
-npm i -g skaya
-```
-2. This will install dependencies, compile TypeScript, and link the CLI.
 
-## Usage
+## Usage 🛠
 
-- Initialize a Project
-```
+Initialize a project:
+
+```bash
 skaya init frontend
+# Interactive template selection will appear
+# Example output:
+# ? Select template category: (Use arrow keys)
+# ❯ Skaya Official 
+#   Skaya Starter Kits 
+#   Community
+
 skaya init backend
 ```
-- Create Middleware
+
+Create components:
+
+```bash
+# Interactive mode
+skaya create
+
+# Explicit component creation
+skaya create page --project frontend
+skaya create middleware --project backend
 ```
-skaya create middleware
+
+# Frontend
 ```
-- Create Route
+skaya create component --project frontend
+skaya create page --project frontend
 ```
-skaya create route
+
+# Backend
 ```
-- Uninstall
+skaya create middleware --project backend
+skaya create route --project backend
+skaya create controller --project backend
 ```
-npm unlink -g skaya
+
+## Project Structure 🌳
+
+Typical frontend structure:
+
+```
+my-frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   ├── App.tsx
+│   └── index.tsx
+├── public/
+│   └── index.html
+└── package.json
+```
+
+Typical backend structure:
+
+```
+my-backend/
+├── src/
+│   ├── prisma/schema.prisma
+├── src/
+│   ├── controllers/
+│   ├── routes/
+│   ├── middlewares/
+│   └── app.ts
+├── package.json
+└── tsconfig.json
+```
+
+## Development 👨‍💻
+
+- For development contributions:
+```
+git clone https://github.com/skaya-ui/skaya-cli.git
+cd skaya-cli
+npm install
+npm run build
+npm link
+```
+
+- Run tests:
+```
+npm test
+```
+
+## Uninstall
+```
+npm uninstall -g skaya
+# For dev version
+npm unlink -g skaya && npm uninstall -g
 ```
