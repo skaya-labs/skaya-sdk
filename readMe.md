@@ -14,28 +14,28 @@ Skaya is a CLI-based SDK that helps you initialize frontend and backend projects
 
 ## Installation
 
-1. Run the setup script:
-
-bash setup_skaya.sh
-
+1. Install via npm:
+```
+npm i -g skaya
+```
 2. This will install dependencies, compile TypeScript, and link the CLI.
 
 ## Usage
 
-Initialize a Project
-
+- Initialize a Project
+```
 skaya init frontend
 skaya init backend
-
-Create Middleware
-
+```
+- Create Middleware
+```
 skaya create middleware
-
-Create Route
-
+```
+- Create Route
+```
 skaya create route
-
-Uninstall
-
+```
+- Uninstall
+```
 npm unlink -g skaya
-
+```
