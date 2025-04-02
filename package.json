@@ -1,0 +1,30 @@
+{
+  "name": "skaya",
+  "version": "1.0.3",
+  "description": "CLI SDK for initializing frontend, backend, middleware, and routes.",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "bin": {
+    "skaya": "./bin/skaya.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^22.13.13",
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "fs-extra": "^11.3.0",
+    "inquirer": "^12.5.0",
+    "@types/fs-extra": "^11.0.4",
+    "@types/inquirer": "^9.0.7",
+    "@types/shelljs": "^0.8.15",
+    "ts-node": "^10.9.2",
+    "shelljs": "^0.9.2",
+    "typescript": "^5.8.2"
+  },
+  "devDependencies": {}
+}
