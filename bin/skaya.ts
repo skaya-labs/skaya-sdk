@@ -15,13 +15,19 @@ import { isValidProjectType, isValidFrontendComponent, isValidBackendComponent }
 import { promptComponentType } from "./utils/prompt";
 import { handleCliError } from "./utils/errorHandler";
 import inquirer from "inquirer";
+import { readFileSync } from "fs";
+import { join } from "path";
+
+// Read package.json to get version
+const packageJsonPath = join(__dirname, '..', 'package.json');
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 
 const program = new Command();
 
 program
-  .name("scaffold-tool")
-  .version("2.1.0")
-  .description("A CLI tool for scaffolding projects and components");
+  .name(packageJson.name)
+  .version(packageJson.version)
+  .description(packageJson.description);
 
 // Project initialization command
 program
