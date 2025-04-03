@@ -11,7 +11,7 @@ class BackendTemplateService {
   }
 
   private loadTemplatesConfig() {
-    const configPath = path.join(__dirname, '../../templates.json');
+    const configPath = path.join(__dirname, '../../templates/githubTemplates.json');
     if (!fs.existsSync(configPath)) {
       throw new Error('Backend template configuration not found');
     }

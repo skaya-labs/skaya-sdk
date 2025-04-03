@@ -9,7 +9,7 @@
 import { Command } from "commander";
 import { createProject, createFile } from "../src/action";
 import { ProjectType, ComponentType, FrontendComponentType, BackendComponentType } from "./types/enums";
-import { ICommandOptions } from "./types/interfaces";
+import { ICommandOptions, ICreateComponentParams } from "./types/interfaces";
 import { isValidProjectType, isValidFrontendComponent, isValidBackendComponent } from "./utils/validator";
 import { promptComponentType } from "./utils/prompt";
 import { handleCliError } from "./utils/errorHandler";
@@ -47,12 +47,19 @@ program
 // Component creation command
 program
   .command("create [type]")
+  .allowUnknownOption()
   .description("Create a new component (interactive mode if no type specified)")
   .option(`-p, --project <type>", "Project type (${ProjectType.FRONTEND} or ${ProjectType.BACKEND})`)
-  .action(async (type: string | undefined, options: ICommandOptions) => {
+  .option("-f, --filename <name>", "Filename for the component")
+  .option("-a, --ai <boolean>", "Use AI to generate the component", false)
+  .option("-d, --description <text>", "Description of the component")
+  .action(async (type: string | undefined, options: ICommandOptions & { filename?: string; ai?: boolean; description?: string }) => {
     try {
       let projectType: ProjectType;
       let componentType: ComponentType;
+      let fileName = options.filename;
+      let useAI = options.ai || false;
+      let description = options.description || '';
 
       // Interactive mode
       if (!type && !options.project) {
@@ -72,11 +79,34 @@ program
                 ? Object.values(FrontendComponentType)
                 : Object.values(BackendComponentType);
             }
+          },
+          {
+            type: 'input',
+            name: 'fileName',
+            message: 'Enter filename (without extension):',
+            when: () => !fileName,
+            validate: (input) => !!input || 'Filename is required'
+          },
+          {
+            type: 'confirm',
+            name: 'useAI',
+            message: 'Use AI to generate the component?',
+            default: true
+          },
+          {
+            type: 'input',
+            name: 'description',
+            message: 'Enter component description:',
+            when: () => !description,
+            default: ''
           }
         ]);
         
         projectType = answers.projectType;
         componentType = answers.componentType;
+        fileName = fileName || answers.fileName;
+        useAI = answers.useAI !== undefined ? answers.useAI : useAI;
+        description = description || answers.description || '';
       } 
       // Partial interactive (project type specified)
       else if (!type && options.project) {
@@ -86,6 +116,35 @@ program
         }
 
         componentType = await promptComponentType(projectType);
+        
+        // Prompt for additional info if not provided
+        const additionalAnswers = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'fileName',
+            message: 'Enter filename (without extension):',
+            when: () => !fileName,
+            validate: (input) => !!input || 'Filename is required'
+          },
+          {
+            type: 'confirm',
+            name: 'useAI',
+            message: 'Use AI to generate the component?',
+            default: useAI,
+            when: () => useAI === undefined
+          },
+          {
+            type: 'input',
+            name: 'description',
+            message: 'Enter component description:',
+            when: () => !description,
+            default: ''
+          }
+        ]);
+        
+        fileName = fileName || additionalAnswers.fileName;
+        useAI = additionalAnswers.useAI !== undefined ? additionalAnswers.useAI : useAI;
+        description = description || additionalAnswers.description || '';
       }
       // Non-interactive mode
       else {
@@ -96,16 +155,34 @@ program
         }
 
         if (projectType === ProjectType.FRONTEND && type && !isValidFrontendComponent(type)) {
-          throw new Error(`Invalid frontend component type. Use '${Object.values(FrontendComponentType).join("' or '")}'.`);
+          throw new Error(`Invalid frontend componene. Ust type. Use '${Object.values(FrontendComponentType).join("' or '")}'.`);
         }
         if (projectType === ProjectType.BACKEND && type && !isValidBackendComponent(type)) {
-          throw new Error(`Invalid backend component type. Use '${Object.values(BackendComponentType).join("' or '")}'.`);
+          throw new Error(`Invalid backend component type '${Object.values(BackendComponentType).join("' or '")}'.`);
         }
         componentType = type as ComponentType;
+        
+        // Validate required fields in non-interactive mode
+        if (!fileName) {
+          throw new Error('Filename is required in non-interactive mode. Use -f or --filename option.');
+        }
       }
+      if (!fileName) {
+        throw new Error('Filename is required to save the AI_generated component')
+      }
+      const params: ICreateComponentParams = {
+        componentType,
+        projectType,
+        fileName,
+        ai: useAI,
+        description
+      };
 
-      await createFile({ componentType, projectType });
-      console.log(`✅ Successfully created ${projectType} ${componentType}`);
+      await createFile(params);
+      console.log(`✅ Successfully created ${projectType} ${componentType} (${fileName})`);
+      if (useAI) {
+        console.log('🔮 AI generation enabled');
+      }
     } catch (error) {
       handleCliError(error as Error, "component creation");
     }
@@ -115,3 +192,4 @@ program
 program.parseAsync(process.argv).catch((error) => {
   handleCliError(error, "argument parsing");
 });
+

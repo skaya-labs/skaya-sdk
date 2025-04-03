@@ -7,12 +7,15 @@
 
 import fs from "fs-extra";
 import path from "path";
-import { BackendComponentType, FrontendComponentType, ProjectType } from "../bin/types/enums";
+import { BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from "../bin/types/enums";
 import { ICreateComponentParams } from "../bin/types/interfaces";
 import inquirer from "inquirer";
 import FrontendTemplateService from "./services/frontend/TemplateService";
 import BackendTemplateService from "./services/backend/TemplateService";
-
+import { detectComponentType } from "./services/projectScanner";
+import {generateCodeWithAI } from "./ai/codeGenerator";
+import * as dotenv from 'dotenv';
+dotenv.config();
 /**
  * Creates a new project scaffold
  * @param {ProjectType} type - The type of project to create
@@ -52,14 +55,27 @@ export async function createProject(type: ProjectType): Promise<void> {
 }
 
 /**
- * Creates a new component file
+ * Creates a new component file with optional AI generation
  * @param {ICreateComponentParams} params - Component creation parameters
  */
 export async function createFile(params: ICreateComponentParams): Promise<void> {
-    const { componentType, projectType } = params;
+    const { componentType, projectType, fileName, ai, description } = params;
+    
+    if (ai) {
+    // Handle AI-generated components
+        return await createAIComponent({
+            componentType,
+            projectType,
+            fileName,
+            ai,
+            description
+        });
+    }
+
+    // Handle regular component creation
     const defaultFolder = getDefaultFolder(projectType, componentType);
 
-    const { folder, fileName } = await inquirer.prompt([
+    const answers = await inquirer.prompt([
         {
             type: "input",
             name: "folder",
@@ -70,19 +86,74 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
             type: "input",
             name: "fileName",
             message: `Enter the ${componentType} name (without extension):`,
+            default: fileName, // Use provided filename if available
             validate: (input: string) => !!input.trim() || "Name cannot be empty",
+            when: !fileName // Only prompt if fileName wasn't provided
         },
     ]);
 
-    const filePath = path.join(process.cwd(), folder, `${fileName}.${getFileExtension(componentType)}`);
+    const finalFileName = fileName || answers.fileName;
+    const targetFolder = answers.folder;
+    const filePath = path.join(process.cwd(), targetFolder, `${finalFileName}.${getFileExtension(componentType)}`);
 
     if (await fs.pathExists(filePath)) {
-        throw new Error(`${componentType} file already exists.`);
+        throw new Error(`${componentType} file "${finalFileName}" already exists in ${targetFolder}.`);
     }
 
-    const template = generateTemplate(componentType, fileName);
+    const template = generateTemplate(componentType, finalFileName);
     await fs.outputFile(filePath, template);
     console.log(`✅ ${componentType} created at ${filePath}`);
+}
+
+/**
+ * Creates an AI-generated component
+ */
+async function createAIComponent(params: ICreateComponentParams): Promise<void> {
+    const { componentType, projectType, fileName, description } = params;
+    
+    // Detect the appropriate folder structure
+    const componentsPath = await detectComponentsFolder(process.cwd(), projectType, componentType);
+    
+    // Generate the component with AI
+    const { code, dependencies } = await generateCodeWithAI(
+        fileName,
+        projectType,
+        componentType as ComponentType,
+        description,
+        {
+            style: "css",
+            typescript: true            
+        }
+    );
+
+    const filePath = path.join(componentsPath, `${fileName}.${getFileExtension(componentType)}`);
+    await fs.outputFile(filePath, code);
+    
+    // Notify about recommended dependencies
+    if (dependencies.length > 0) {
+        console.log('ℹ️ Additional dependencies recommended:', dependencies.join(', '));
+    }
+    
+    console.log(`✨ AI-generated ${componentType} created at ${filePath}`);
+}
+
+// Helper function to detect components folder with project type awareness
+async function detectComponentsFolder(
+    basePath: string,
+    projectType: ProjectType,
+    componentType: string
+): Promise<string> {
+    const { path: detectedPath } = await detectComponentType(
+        projectType,
+        componentType,
+        basePath
+    );
+    
+    // Verify the folder exists or create it
+    const fullPath = path.join(basePath, detectedPath);
+    await fs.ensureDir(fullPath);
+    
+    return detectedPath;
 }
 
 /**
@@ -142,3 +213,6 @@ function generateTemplate(componentType: FrontendComponentType | BackendComponen
             return `// ${pascalCaseName} ${componentType} file\n`;
     }
 }
+
+
+

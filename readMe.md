@@ -2,6 +2,12 @@
 
 Skaya is an advanced CLI toolkit that supercharges your full-stack web3 project setup with production-ready templates and interactive scaffolding with Artificial intelligence
 
+## Installation 📦
+
+```bash
+npm install -g skaya
+```
+
 ## Features ✨
 
 ### 🏗️ Project Scaffolding
@@ -17,21 +23,17 @@ Skaya is an advanced CLI toolkit that supercharges your full-stack web3 project 
   - Prisma ORM integrated
   - Ready-to-use auth scaffolding
 
-### 🧩 Component Generation
-- **Frontend**:
-  - Components (TSX)
-  - Pages (TSX)
+### 🧩 AI-Powered Generation
+- **Frontend Components**:
+  - Smart component generation with AI
+  - Multiple styling options (CSS, SCSS, styled-components)
+  - TypeScript/JavaScript support
+  - Props/State management configuration
 
-- **Backend**:
-  - Routes
-  - Controllers
-  - Middlewares
-
-## Installation 📦
-
-```bash
-npm install -g skaya
-```
+- **Backend Modules**:
+  - Routes with CRUD operations
+  - Controllers with business logic
+  - Middlewares with authentication
 
 ## Usage 🛠
 
@@ -55,7 +57,7 @@ skaya init backend
 #  Community
 ```
 
-Create components:
+### Create components:
 
 ```bash
 # Interactive mode
@@ -65,6 +67,14 @@ skaya create
 skaya create page --project frontend
 skaya create middleware --project backend
 ```
+### Options
+
+| Option | Description |
+|--------|-------------|
+| -p, --project <type> | Project type (frontend or backend) |
+| -f, --filename <name> | Filename for the component |
+| -a, --ai | Use AI to generate the component |
+| -d, --description <text> | Description of the component for AI generation |
 
 # Frontend
 ```

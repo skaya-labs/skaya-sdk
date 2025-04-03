@@ -13,4 +13,7 @@ export interface ICommandOptions {
 export interface ICreateComponentParams {
   componentType: ComponentType;
   projectType: ProjectType;
+  fileName:string
+  ai:boolean
+  description:string
 }

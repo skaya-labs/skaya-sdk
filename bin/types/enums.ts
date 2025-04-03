@@ -38,3 +38,27 @@ export enum ProjectType {
       SKAYA_ECOMMERCE = "skaya-ecommerce",
       CUSTOM = "custom"
     }
+
+    export enum ComponentCategory {
+      FRONTEND = 'frontend',
+      BACKEND = 'backend',
+      MIDDLEWARE = 'middleware',
+      TEST = 'test',
+      CONFIG = 'config'
+    }
+    
+    export enum FrontendStructure {
+      COMPONENTS = 'components',
+      PAGES = 'pages',
+      HOOKS = 'hooks',
+      STORES = 'stores',
+      STYLES = 'styles'
+    }
+    
+    export enum BackendStructure {
+      CONTROLLERS = 'controllers',
+      ROUTES = 'routes',
+      MIDDLEWARES = 'middlewares',
+      SERVICES = 'services',
+      MODELS = 'models'
+    }
