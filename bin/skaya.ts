@@ -16,7 +16,7 @@ import { handleCliError } from "./utils/errorHandler";
 import inquirer from "inquirer";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { saveProjectConfig, logComponentCreation } from "./utils/configLogger";
+import { logComponentCreation } from "./utils/configLogger";
 
 // Read package.json to get version
 const packageJsonPath = join(__dirname, '..', 'package.json');
@@ -31,12 +31,30 @@ program
 
 // Project initialization command
 program
-  .command("init <type>")
-  .description("Initialize a new project (frontend or backend)")
-  .action(async (type: string) => {
+  .command("init [type]")
+  .description("Initialize a new project")
+  .action(async (type?: string) => {
     try {
-      if (!isValidProjectType(type)) {
-        throw new Error(`Invalid project type. Use '${ProjectType.FRONTEND}' or '${ProjectType.BACKEND}'.`);
+      // If type wasn't provided, prompt the user to select one
+      if (!type) {
+        const answer = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'projectType',
+            message: 'Please select a project type first:',
+            choices: [
+              { name: 'Frontend', value: ProjectType.FRONTEND },
+              { name: 'Backend', value: ProjectType.BACKEND }
+            ],
+          }
+        ]);
+        type = answer.projectType;
+      }
+
+      if (type && !isValidProjectType(type)) {
+        throw new Error(
+          `Invalid project type "${type}". Use '${ProjectType.FRONTEND}' or '${ProjectType.BACKEND}'.`
+        );
       }
   
       await createProject(type as ProjectType);
