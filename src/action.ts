@@ -15,6 +15,7 @@ import BackendTemplateService from "./services/backend/TemplateService";
 import { detectComponentType } from "./services/projectScanner";
 import {generateCodeWithAI } from "./ai/codeGenerator";
 import * as dotenv from 'dotenv';
+import { saveProjectConfig } from "../bin/utils/configLogger";
 dotenv.config();
 /**
  * Creates a new project scaffold
@@ -33,6 +34,8 @@ export async function createProject(type: ProjectType): Promise<void> {
             default: defaultFolder,
         },
     ]);
+
+    await saveProjectConfig(type.toLowerCase() as 'frontend' | 'backend', folder);
 
     const targetPath = path.join(process.cwd(), folder);
 

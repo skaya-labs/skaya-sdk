@@ -16,6 +16,7 @@ import { handleCliError } from "./utils/errorHandler";
 import inquirer from "inquirer";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { saveProjectConfig, logComponentCreation } from "./utils/configLogger";
 
 // Read package.json to get version
 const packageJsonPath = join(__dirname, '..', 'package.json');
@@ -37,6 +38,7 @@ program
       if (!isValidProjectType(type)) {
         throw new Error(`Invalid project type. Use '${ProjectType.FRONTEND}' or '${ProjectType.BACKEND}'.`);
       }
+  
       await createProject(type as ProjectType);
       console.log(`✅ Successfully created ${type} project`);
     } catch (error) {
@@ -179,6 +181,13 @@ program
       };
 
       await createFile(params);
+      // Log the component creation
+      await logComponentCreation({
+        componentType,
+        projectType,
+        fileName,
+        description
+      });
       console.log(`✅ Successfully created ${projectType} ${componentType} (${fileName})`);
       if (useAI) {
         console.log('🔮 AI generation enabled');
