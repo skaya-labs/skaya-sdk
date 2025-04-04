@@ -1,6 +1,6 @@
 {
   "name": "skaya",
-  "version": "1.2.4",
+  "version": "1.2.7",
   "main": "src/action.js",
   "types": "src/action.d.ts",
   "description": "CLI SDK for full-stack automation: scaffold frontend, backend & blockchain. Future-ready for Web3, integrations, server components & logging.",
@@ -10,7 +10,7 @@
     "prepublishOnly": "npm run build"
   },
   "bin": {
-    "skaya": "./bin/skaya.ts"
+    "skaya": "./dist/bin/skaya.js"
   },
   "author": "skaya-labs",
   "license": "ISC",
