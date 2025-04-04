@@ -7,6 +7,15 @@ Skaya is an advanced CLI toolkit that supercharges your full-stack web3 project 
 ```bash
 npm install -g skaya
 ```
+## Usage with npx 📦
+
+```bash
+npx skaya -V
+
+npx skaya init
+
+npx skaya create
+```
 
 ## Features ✨
 
