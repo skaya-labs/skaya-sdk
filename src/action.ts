@@ -42,7 +42,7 @@ export async function createProject(type: ProjectType): Promise<void> {
 
     await fs.ensureDir(targetPath);
 
-    // Create basic project structure based on type
+    // Create basic project structure based on type //todo use same template service
     if (type === ProjectType.FRONTEND) {
         const { templateType, customRepo } = await FrontendTemplateService.promptTemplateSelection();
         await FrontendTemplateService.cloneTemplate(templateType, customRepo, targetPath);
@@ -81,18 +81,10 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
             name: "folder",
             message: `Enter the folder where you want to create the ${componentType}:`,
             default: defaultFolder,
-        },
-        {
-            type: "input",
-            name: "fileName",
-            message: `Enter the ${componentType} name (without extension):`,
-            default: fileName, // Use provided filename if available
-            validate: (input: string) => !!input.trim() || "Name cannot be empty",
-            when: !fileName // Only prompt if fileName wasn't provided
-        },
+        }
     ]);
 
-    const finalFileName = fileName || answers.fileName;
+    const finalFileName = fileName ;
     const targetFolder = answers.folder;
     const filePath = path.join(process.cwd(), targetFolder, `${finalFileName}.${getFileExtension(componentType)}`);
 
