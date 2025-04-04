@@ -14,9 +14,7 @@ import FrontendTemplateService from "./services/frontend/TemplateService";
 import BackendTemplateService from "./services/backend/TemplateService";
 import { detectComponentType } from "./services/projectScanner";
 import {generateCodeWithAI } from "./ai/codeGenerator";
-import * as dotenv from 'dotenv';
 import { readConfig, saveProjectConfig } from "../bin/utils/configLogger";
-dotenv.config();
 /**
  * Creates a new project scaffold
  * @param {ProjectType} type - The type of project to create
