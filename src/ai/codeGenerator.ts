@@ -2,9 +2,8 @@ import OpenAI from "openai";
 import { readFileSync } from 'fs';
 import path from 'path';
 import { ComponentType } from '../../bin/types/enums';
-import * as dotenv from 'dotenv';
-dotenv.config();
-const openai = new OpenAI({ apiKey: process.env.openAiApiKey });
+import inquirer from "inquirer";
+
 
 // Interface for component generation options
 interface ComponentGenerationOptions {
@@ -32,6 +31,19 @@ export async function generateCodeWithAI(
   // Read the template file
   const templatePath = path.join(__dirname, `../templates/frontendTemplates/component.jsx`);
   const promptTemplate = readFileSync(templatePath, 'utf-8');
+  const { apiKey } = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'apiKey',
+      message: 'Enter skaya apiKey:',
+      validate: (apiKey) => !!apiKey || 'Api key is required.'
+    },
+  ]);
+  if (!apiKey) {
+    throw new Error('API key is required.');
+  }
+
+  const openai = new OpenAI({ apiKey: apiKey });
 
   // Prepare the instructions for the AI
   const instructions = [
