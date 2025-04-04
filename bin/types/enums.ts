@@ -18,7 +18,6 @@ export enum FrontendComponentType {
  * Backend component type enumeration
  */
 export enum BackendComponentType {
-  MIDDLEWARE = "middleware",
   ROUTE = "route",
   CONTROLLER = "controller",
 }
@@ -37,20 +36,4 @@ export enum FrontendTemplateType {
   SKAYA_NEXTJS = "skaya-nextjs",
   SKAYA_ECOMMERCE = "skaya-ecommerce",
   CUSTOM = "custom"
-}
-
-export enum FrontendStructure {
-  COMPONENTS = 'components',
-  PAGES = 'pages',
-  HOOKS = 'hooks',
-  STORES = 'stores',
-  STYLES = 'styles'
-}
-
-export enum BackendStructure {
-  CONTROLLERS = 'controllers',
-  ROUTES = 'routes',
-  MIDDLEWARES = 'middlewares',
-  SERVICES = 'services',
-  MODELS = 'models'
 }
