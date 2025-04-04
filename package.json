@@ -10,7 +10,7 @@
     "prepublishOnly": "npm run build"
   },
   "bin": {
-    "skaya": "./bin/skaya.ts"
+    "skaya": "./bin/skaya.js"
   },
   "author": "skaya-labs",
   "license": "ISC",

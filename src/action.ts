@@ -15,7 +15,7 @@ import BackendTemplateService from "./services/backend/TemplateService";
 import { detectComponentType } from "./services/projectScanner";
 import {generateCodeWithAI } from "./ai/codeGenerator";
 import * as dotenv from 'dotenv';
-import { saveProjectConfig } from "../bin/utils/configLogger";
+import { readConfig, saveProjectConfig } from "../bin/utils/configLogger";
 dotenv.config();
 /**
  * Creates a new project scaffold
@@ -76,7 +76,7 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
     }
 
     // Handle regular component creation
-    const defaultFolder = getDefaultFolder(projectType, componentType);
+    const defaultFolder = await getDefaultFolder(projectType, componentType);
 
     const answers = await inquirer.prompt([
         {
@@ -154,24 +154,49 @@ async function detectComponentsFolder(
 /**
  * Gets the default folder for a component type
  */
-function getDefaultFolder(projectType: ProjectType, componentType: FrontendComponentType | BackendComponentType): string {
+async function getDefaultFolder(
+    projectType: ProjectType,
+    componentType: FrontendComponentType | BackendComponentType
+): Promise<string> {
+    const config = await readConfig();
+
+    // Check if config exists for the provided projectType
+    if (!config) {
+        throw new Error("Configuration not found.");
+    }
+
+    if (projectType === ProjectType.FRONTEND && !config.frontend) {
+        throw new Error("Frontend project type specified, but no 'frontend' config found. Initialize a frontend project with skaya init.");
+    }
+
+    if (projectType === ProjectType.BACKEND && !config.backend) {
+        throw new Error("Backend project type specified, but no 'backend' config found. Initialize a frontend project with skaya init.");
+    }
+
+    // Set baseSrcPath based on projectType
+    const baseSrcPath = projectType === ProjectType.FRONTEND
+        ? `${config.frontend}/src`
+        : `${config.backend}/src`;
+
+    // Resolve folder path based on projectType and componentType
     if (projectType === ProjectType.FRONTEND) {
         return componentType === FrontendComponentType.PAGE
-            ? "src/pages"
-            : "src/components";
+            ? `${baseSrcPath}/pages`
+            : `${baseSrcPath}/components`;
     }
 
     switch (componentType) {
         case BackendComponentType.MIDDLEWARE:
-            return "src/middlewares";
+            return `${baseSrcPath}/middlewares`;
         case BackendComponentType.ROUTE:
-            return "src/routes";
+            return `${baseSrcPath}/routes`;
         case BackendComponentType.CONTROLLER:
-            return "src/controllers";
+            return `${baseSrcPath}/controllers`;
         default:
-            return "src";
+            return baseSrcPath;
     }
 }
+
 
 /**
  * Gets the appropriate file extension for a component type
