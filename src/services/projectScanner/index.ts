@@ -2,9 +2,9 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { 
-  FrontendStructure,
-  BackendStructure,
-  ProjectType 
+  ProjectType, 
+  BackendComponentType,
+  FrontendComponentType
 } from '../../../bin/types/enums';
 
 type StructureConfig = {
@@ -43,7 +43,7 @@ const structureConfig: StructureConfig = {
 
 export async function detectProjectStructure(
   category: ProjectType,
-  specificType?: FrontendStructure | BackendStructure,
+  specificType?: FrontendComponentType | BackendComponentType,
   basePath: string = process.cwd()
 ): Promise<string> {
   // Check if we need to look for a specific sub-type
@@ -81,16 +81,16 @@ export async function detectComponentType(
   basePath: string = process.cwd()
 ): Promise<{ category: ProjectType; path: string }> {
   let category: ProjectType;
-  let specificType: FrontendStructure | BackendStructure | undefined;
+  let specificType: FrontendComponentType | BackendComponentType | undefined;
 
   switch (projectType) {
     case ProjectType.FRONTEND:
       category = ProjectType.FRONTEND;
-      specificType = FrontendStructure[componentType.toUpperCase() as keyof typeof FrontendStructure];
+      specificType = FrontendComponentType[componentType.toUpperCase() as keyof typeof FrontendComponentType];
       break;
     case ProjectType.BACKEND:
       category = ProjectType.BACKEND;
-      specificType = BackendStructure[componentType.toUpperCase() as keyof typeof BackendStructure];
+      specificType = BackendComponentType[componentType.toUpperCase() as keyof typeof BackendComponentType];
       break;
     default:
       category = ProjectType[projectType as keyof typeof ProjectType];

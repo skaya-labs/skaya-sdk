@@ -65,7 +65,6 @@ skaya create
 
 # Explicit component creation
 skaya create page --project frontend
-skaya create middleware --project backend
 ```
 ### Options
 
@@ -84,7 +83,6 @@ skaya create page --project frontend
 
 # Backend
 ```
-skaya create middleware --project backend
 skaya create route --project backend
 skaya create controller --project backend
 ```

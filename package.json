@@ -1,9 +1,9 @@
 {
   "name": "skaya",
-  "version": "1.2.2",
+  "version": "1.2.4",
   "main": "src/action.js",
   "types": "src/action.d.ts",
-  "description": "CLI SDK for full-stack automation: scaffold frontend, backend, middleware & routes. Future-ready for Web3, integrations, server components & logging.",
+  "description": "CLI SDK for full-stack automation: scaffold frontend, backend & blockchain. Future-ready for Web3, integrations, server components & logging.",
   "scripts": {
     "build": "tsc && cp -r src/**/*.json dist/src/templates",
     "build:windows": "tsc && xcopy /s /y src\\*.json dist\\",
@@ -67,5 +67,8 @@
     "websockets",
     "serverless",
     "cloud"
-  ]
+  ],
+  "devDependencies": {
+    "@types/react": "^19.1.0"
+  }
 }

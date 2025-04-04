@@ -13,8 +13,10 @@ import inquirer from "inquirer";
 import FrontendTemplateService from "./services/frontend/TemplateService";
 import BackendTemplateService from "./services/backend/TemplateService";
 import { detectComponentType } from "./services/projectScanner";
-import {generateCodeWithAI } from "./ai/codeGenerator";
-import { readConfig, saveProjectConfig } from "../bin/utils/configLogger";
+import { generateCodeWithAI } from "./ai/codeGenerator";
+import { saveProjectConfig } from "../bin/utils/configLogger";
+import { generateFromTemplate, getDefaultFolder as getTemplateDefaultFolder } from "./scripts/template";
+
 /**
  * Creates a new project scaffold
  * @param {ProjectType} type - The type of project to create
@@ -43,14 +45,14 @@ export async function createProject(type: ProjectType): Promise<void> {
 
     await fs.ensureDir(targetPath);
 
-    // Create basic project structure based on type //todo use same template service
+    // Create basic project structure based on type
     if (type === ProjectType.FRONTEND) {
         const { templateType, customRepo } = await FrontendTemplateService.promptTemplateSelection();
         await FrontendTemplateService.cloneTemplate(templateType, customRepo, targetPath);
     } else {
         const { templateType, customRepo } = await BackendTemplateService.promptTemplateSelection();
         await BackendTemplateService.cloneTemplate(templateType, customRepo, targetPath);
-   }
+    }
 
     console.log(`✅ ${type} project initialized in ${folder}`);
 }
@@ -63,7 +65,7 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
     const { componentType, projectType, fileName, ai, description } = params;
     
     if (ai) {
-    // Handle AI-generated components
+        // Handle AI-generated components
         return await createAIComponent({
             componentType,
             projectType,
@@ -74,7 +76,7 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
     }
 
     // Handle regular component creation
-    const defaultFolder = await getDefaultFolder(projectType, componentType);
+    const defaultFolder = await getTemplateDefaultFolder(projectType, componentType);
 
     const answers = await inquirer.prompt([
         {
@@ -85,17 +87,18 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
         }
     ]);
 
-    const finalFileName = fileName ;
+    const finalFileName = fileName;
     const targetFolder = answers.folder;
-    const filePath = path.join(process.cwd(), targetFolder, `${finalFileName}.${getFileExtension(componentType)}`);
+    const filePaths = await generateFromTemplate({
+        componentType,
+        projectType,
+        fileName: finalFileName,
+        targetFolder
+    });
 
-    if (await fs.pathExists(filePath)) {
-        throw new Error(`${componentType} file "${finalFileName}" already exists in ${targetFolder}.`);
+    for (const filePath of filePaths) {
+        console.log(`✅ ${componentType} file created at ${filePath}`);
     }
-
-    const template = generateTemplate(componentType, finalFileName);
-    await fs.outputFile(filePath, template);
-    console.log(`✅ ${componentType} created at ${filePath}`);
 }
 
 /**
@@ -107,27 +110,31 @@ async function createAIComponent(params: ICreateComponentParams): Promise<void> 
     // Detect the appropriate folder structure
     const componentsPath = await detectComponentsFolder(process.cwd(), projectType, componentType);
     
-    // Generate the component with AI
-    const { code, dependencies } = await generateCodeWithAI(
+    // Generate all files for the component
+    const { files, dependencies } = await generateCodeWithAI(
         fileName,
         projectType,
-        componentType as ComponentType,
+        componentType,
         description,
         {
             style: "css",
             typescript: true            
         }
     );
-
-    const filePath = path.join(componentsPath, `${fileName}.${getFileExtension(componentType)}`);
-    await fs.outputFile(filePath, code);
+  
+    // Write all generated files
+    for (const file of files) {
+        const filePath = path.join(componentsPath,fileName, file.fileName);
+        await fs.outputFile(filePath, file.content);
+        console.log(`✓ Created ${file.fileName} at ${filePath}`);
+    }
     
     // Notify about recommended dependencies
     if (dependencies.length > 0) {
         console.log('ℹ️ Additional dependencies recommended:', dependencies.join(', '));
     }
     
-    console.log(`✨ AI-generated ${componentType} created at ${filePath}`);
+    console.log(`✨ AI-generated ${componentType} created successfully`);
 }
 
 // Helper function to detect components folder with project type awareness
@@ -148,89 +155,3 @@ async function detectComponentsFolder(
     
     return detectedPath;
 }
-
-/**
- * Gets the default folder for a component type
- */
-async function getDefaultFolder(
-    projectType: ProjectType,
-    componentType: FrontendComponentType | BackendComponentType
-): Promise<string> {
-    const config = await readConfig();
-
-    // Check if config exists for the provided projectType
-    if (!config) {
-        throw new Error("Configuration not found.");
-    }
-
-    if (projectType === ProjectType.FRONTEND && !config.frontend) {
-        throw new Error("Frontend project type specified, but no 'frontend' config found. Initialize a frontend project with skaya init.");
-    }
-
-    if (projectType === ProjectType.BACKEND && !config.backend) {
-        throw new Error("Backend project type specified, but no 'backend' config found. Initialize a frontend project with skaya init.");
-    }
-
-    // Set baseSrcPath based on projectType
-    const baseSrcPath = projectType === ProjectType.FRONTEND
-        ? `${config.frontend}/src`
-        : `${config.backend}/src`;
-
-    // Resolve folder path based on projectType and componentType
-    if (projectType === ProjectType.FRONTEND) {
-        return componentType === FrontendComponentType.PAGE
-            ? `${baseSrcPath}/pages`
-            : `${baseSrcPath}/components`;
-    }
-
-    switch (componentType) {
-        case BackendComponentType.MIDDLEWARE:
-            return `${baseSrcPath}/middlewares`;
-        case BackendComponentType.ROUTE:
-            return `${baseSrcPath}/routes`;
-        case BackendComponentType.CONTROLLER:
-            return `${baseSrcPath}/controllers`;
-        default:
-            return baseSrcPath;
-    }
-}
-
-
-/**
- * Gets the appropriate file extension for a component type
- */
-function getFileExtension(componentType: FrontendComponentType | BackendComponentType): string {
-    return componentType === FrontendComponentType.COMPONENT
-        ? "tsx"
-        : "ts";
-}
-
-/**
- * Generates template content based on component type
- */
-function generateTemplate(componentType: FrontendComponentType | BackendComponentType, fileName: string): string {
-    const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1);
-
-    switch (componentType) {
-        case FrontendComponentType.COMPONENT:
-            return `import React from 'react';\n\ninterface ${pascalCaseName}Props {}\n\nexport const ${pascalCaseName}: React.FC<${pascalCaseName}Props> = () => {\n  return (\n    <div>\n      {/* Your component JSX */}\n    </div>\n  );\n};\n`;
-
-        case FrontendComponentType.PAGE:
-            return `import React from 'react';\n\nconst ${pascalCaseName}Page = () => {\n  return (\n    <main>\n      {/* Your page content */}\n    </main>\n  );\n};\n\nexport default ${pascalCaseName}Page;\n`;
-
-        case BackendComponentType.MIDDLEWARE:
-            return `import { Request, Response, NextFunction } from 'express';\n\nexport const ${fileName} = (req: Request, res: Response, next: NextFunction) => {\n  // Your middleware logic\n  next();\n};\n`;
-
-        case BackendComponentType.ROUTE:
-            return `import express from 'express';\nimport { ${fileName}Controller } from '../controllers/${fileName}.controller';\n\nconst router = express.Router();\n\nrouter.get('/', ${fileName}Controller);\n\nexport default router;\n`;
-
-        case BackendComponentType.CONTROLLER:
-            return `import { Request, Response } from 'express';\n\nexport const ${fileName}Controller = (req: Request, res: Response) => {\n  // Your controller logic\n  res.send('${pascalCaseName} response');\n};\n`;
-     
-        default:
-            return `// ${pascalCaseName} ${componentType} file\n`;
-    }
-}
-
-
-
