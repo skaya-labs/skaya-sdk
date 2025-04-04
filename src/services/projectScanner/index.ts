@@ -2,21 +2,20 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { 
-  ComponentCategory,
   FrontendStructure,
   BackendStructure,
   ProjectType 
 } from '../../../bin/types/enums';
 
 type StructureConfig = {
-  [key in ComponentCategory]: {
+  [key in ProjectType]: {
     defaultPaths: string[];
     alternatives: string[];
   }
 };
 
 const structureConfig: StructureConfig = {
-  [ComponentCategory.FRONTEND]: {
+  [ProjectType.FRONTEND]: {
     defaultPaths: [
       'src/components',
       'frontend/src/components',
@@ -28,7 +27,7 @@ const structureConfig: StructureConfig = {
       'lib/components'
     ]
   },
-  [ComponentCategory.BACKEND]: {
+  [ProjectType.BACKEND]: {
     defaultPaths: [
       'src/controllers',
       'server/src/controllers',
@@ -40,35 +39,10 @@ const structureConfig: StructureConfig = {
       'lib/controllers'
     ]
   },
-  [ComponentCategory.MIDDLEWARE]: {
-    defaultPaths: [
-      'src/middlewares',
-      'server/src/middlewares'
-    ],
-    alternatives: [
-      'middlewares',
-      'api/middlewares'
-    ]
-  },
-  [ComponentCategory.TEST]: {
-    defaultPaths: [
-      'test',
-      '__tests__',
-      'spec'
-    ],
-    alternatives: []
-  },
-  [ComponentCategory.CONFIG]: {
-    defaultPaths: [
-      'config',
-      'configuration'
-    ],
-    alternatives: []
-  }
 };
 
 export async function detectProjectStructure(
-  category: ComponentCategory,
+  category: ProjectType,
   specificType?: FrontendStructure | BackendStructure,
   basePath: string = process.cwd()
 ): Promise<string> {
@@ -105,21 +79,21 @@ export async function detectComponentType(
   projectType: ProjectType,
   componentType: string,
   basePath: string = process.cwd()
-): Promise<{ category: ComponentCategory; path: string }> {
-  let category: ComponentCategory;
+): Promise<{ category: ProjectType; path: string }> {
+  let category: ProjectType;
   let specificType: FrontendStructure | BackendStructure | undefined;
 
   switch (projectType) {
     case ProjectType.FRONTEND:
-      category = ComponentCategory.FRONTEND;
+      category = ProjectType.FRONTEND;
       specificType = FrontendStructure[componentType.toUpperCase() as keyof typeof FrontendStructure];
       break;
     case ProjectType.BACKEND:
-      category = ComponentCategory.BACKEND;
+      category = ProjectType.BACKEND;
       specificType = BackendStructure[componentType.toUpperCase() as keyof typeof BackendStructure];
       break;
     default:
-      category = ComponentCategory[projectType as keyof typeof ComponentCategory];
+      category = ProjectType[projectType as keyof typeof ProjectType];
   }
 
   const detectedPath = await detectProjectStructure(category, specificType, basePath);
