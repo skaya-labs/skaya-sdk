@@ -9,6 +9,17 @@ import fs from "fs-extra";
 import path from "path";
 import { BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from "../../bin/types/enums";
 import { readConfig } from "../../bin/utils/configLogger";
+import { generateCodeWithAI } from "../ai/codeGenerator";
+
+export interface ComponentGenerationOptions {
+    style: 'css' | 'scss' | 'styled-components' | 'none';
+    typescript: boolean;
+    withProps?: boolean;
+    withState?: boolean;
+    withEffects?: boolean;
+    withTests?: boolean;
+    withStories?: boolean;
+}
 
 /**
  * Generates component files from templates
@@ -19,43 +30,68 @@ import { readConfig } from "../../bin/utils/configLogger";
  * @param {string} params.targetFolder - The target folder path
  * @returns {Promise<string[]>} Array of created file paths
  */
+
 export async function generateFromTemplate(params: {
     componentType: ComponentType;
     projectType: ProjectType;
     fileName: string;
     targetFolder: string;
+    ai: boolean;
+    description?: string;
 }): Promise<string[]> {
-    const { componentType, projectType, fileName, targetFolder } = params;
+    const { componentType, projectType, fileName, targetFolder, ai, description } = params;
     const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1);
     const createdFiles: string[] = [];
 
-    // Get template files for the component type
-    const templateFiles = getTemplateFilesForType(componentType);
     const templateDir = path.join(__dirname, '..', 'templates', projectType.toLowerCase(), componentType);
 
-    // Verify template directory exists
     if (!await fs.pathExists(templateDir)) {
-        throw new Error(`Template directory not found for ${projectType}/${componentType}. Please ensure template files are installed. Initialize using skaya init`);
+        throw new Error(`Template directory not found for ${projectType}/${componentType}. Initialize using skaya init.`);
     }
 
-    // Create each template file
-    for (const templateFile of templateFiles) {
-        const sourcePath = path.join(templateDir, templateFile);
-        const targetFileName = templateFile.replace(new RegExp(componentType, 'g'), fileName.toLowerCase());
-        const targetPath = path.join(process.cwd(), targetFolder,fileName, targetFileName);
+    let templateFiles = await getTemplateFilesForType(componentType, fileName, templateDir);
 
-        if (!await fs.pathExists(sourcePath)) {
-            throw new Error(`Template file ${templateFile} not found in ${templateDir}`);
+    if (ai) {
+        const options: ComponentGenerationOptions = {
+            style: 'css',
+            typescript: true,
+            withProps: true,
+            withState: false,
+            withEffects: false,
+            withTests: true,
+            withStories: projectType === ProjectType.FRONTEND
+        };
+
+        const aiResult = await generateCodeWithAI(
+            fileName,
+            projectType,
+            componentType,
+            description,
+            options,
+            templateFiles
+        );
+
+        templateFiles = aiResult;
+    }
+
+    for (const templateFile of templateFiles) {
+        let content = templateFile.content;
+
+        // If AI is not used, read from disk
+        if (!content) {
+            const sourcePath = path.join(templateDir, templateFile.originalFileName);
+            if (!await fs.pathExists(sourcePath)) {
+                throw new Error(`Template file ${templateFile.originalFileName} not found in ${templateDir}`);
+            }
+            content = await fs.readFile(sourcePath, 'utf-8');
         }
 
-        // Read and process template file
-        let content = await fs.readFile(sourcePath, 'utf-8');
-        
-        // Replace placeholders in the template
         content = content.replace(/{{name}}/g, fileName)
-                        .replace(/{{Name}}/g, pascalCaseName)
-                        .replace(/{{NAME}}/g, fileName.toUpperCase());
+            .replace(/{{Name}}/g, pascalCaseName)
+            .replace(/{{NAME}}/g, fileName.toUpperCase())
+            .replace(new RegExp(`${componentType}`, 'g'), `${pascalCaseName}`)
 
+        const targetPath = path.join(process.cwd(), targetFolder, pascalCaseName, templateFile.targetFileName);
         await fs.outputFile(targetPath, content);
         createdFiles.push(targetPath);
     }
@@ -63,12 +99,43 @@ export async function generateFromTemplate(params: {
     return createdFiles;
 }
 
+export interface TemplateFileInfo {
+    originalFileName: string;
+    targetFileName: string;
+    content?: string;
+}
+
 /**
- * Gets template files for a specific component type
+ * Gets template files for a specific component type with their contents
  * @param {ComponentType} componentType - The type of component
- * @returns {string[]} Array of template file names
+ * @param {string} fileName - The name of the file to use for replacements
+ * @param {string} templateDir - The directory where templates are located
+ * @returns {Promise<TemplateFileInfo[]>} Array of template file information
  */
-export function getTemplateFilesForType(componentType: ComponentType): string[] {
+export async function getTemplateFilesForType(
+    componentType: ComponentType,
+    fileName: string,
+    templateDir: string
+): Promise<TemplateFileInfo[]> {
+    const baseFiles = getBaseTemplateFiles(componentType);
+    const result: TemplateFileInfo[] = [];
+
+    // Capitalize first letter, lowercase the rest
+    const formattedFileName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
+
+    for (const file of baseFiles) {
+        const targetFileName = file.replace(new RegExp(componentType, 'gi'), formattedFileName);
+        result.push({
+            originalFileName: file,
+            targetFileName
+        });
+    }
+
+    return result;
+}
+
+
+function getBaseTemplateFiles(componentType: ComponentType): string[] {
     switch (componentType) {
         case FrontendComponentType.COMPONENT:
             return [`${FrontendComponentType.COMPONENT}.tsx`, 
@@ -86,7 +153,7 @@ export function getTemplateFilesForType(componentType: ComponentType): string[] 
             return [`${BackendComponentType.CONTROLLER}.ts`, 
                    `${BackendComponentType.CONTROLLER}.test.ts`];
         default:
-            const exhaustiveCheck: any = componentType;
+            const exhaustiveCheck: never = componentType;
             throw new Error(`Unhandled component type for getTemplateFilesForType: ${exhaustiveCheck}`);
     }
 }
