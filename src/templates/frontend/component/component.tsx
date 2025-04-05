@@ -4,7 +4,7 @@ import './Heading.css';
 export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 export type HeadingVariation = 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
 
-export const Component: React.FC<{
+export const component: React.FC<{
   className?: string;
   children?: React.ReactNode;
   style?: React.CSSProperties;
@@ -13,16 +13,15 @@ export const Component: React.FC<{
   children="",
   style={}
 }) => {
-  const ComponentUi = `div`;
   
   return (
-    <ComponentUi 
+    <React.Component 
       className={className}
       style={style}
     >
       {children}
-    </ComponentUi>
+    </React.Component >
   );
 };
 
-export default Component;
+export default component;

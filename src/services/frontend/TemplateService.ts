@@ -38,12 +38,6 @@ class FrontendTemplateService {
       value: t
     }));
 
-    if (category === 'community') {
-      templateChoices.push({
-        name: 'Other GitHub Repository',
-        value: 'custom'
-      });
-    }
 
     const { templateType } = await inquirer.prompt([{
       type: 'list',
