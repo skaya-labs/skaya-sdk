@@ -46,7 +46,7 @@ export async function generateCodeWithAI(
   };
 
   for (const fileTemplate of templateFiles) {
-const templateFolder = path.join(process.cwd(), 'src', 'templates',projectType,componentType,fileTemplate.originalFileName);
+  const templateFolder = path.join(process.cwd(), 'src', 'templates',projectType,componentType,fileTemplate.originalFileName);
 
     if (!existsSync(templateFolder)) {
       throw new Error(`Template file not found: ${fileTemplate} ${templateFolder}`);
