@@ -10,17 +10,16 @@ import path from "path";
 import { ProjectType } from "../bin/types/enums";
 import { ICreateComponentParams } from "../bin/types/interfaces";
 import inquirer from "inquirer";
-import FrontendTemplateService from "./services/frontend/TemplateService";
-import BackendTemplateService from "./services/backend/TemplateService";
 import { saveProjectConfig } from "../bin/utils/configLogger";
 import { generateFromTemplate, getDefaultFolder as getTemplateDefaultFolder } from "./scripts/templateGenerator";
+import TemplateService from "./services/TemplateService";
 
 /**
  * Creates a new project scaffold
- * @param {ProjectType} type - The type of project to create
+ * @param {ProjectType} projectType - The type of project to create
  */
-export async function createProject(type: ProjectType): Promise<void> {
-    const defaultFolder = type === ProjectType.FRONTEND
+export async function createProject(projectType: ProjectType): Promise<void> {
+    const defaultFolder = projectType === ProjectType.FRONTEND
         ? "frontend-app"
         : "backend-app";
 
@@ -28,12 +27,12 @@ export async function createProject(type: ProjectType): Promise<void> {
         {
             type: "input",
             name: "folder",
-            message: `Enter ${type} project folder name:`,
+            message: `Enter ${projectType} project folder name:`,
             default: defaultFolder,
         },
     ]);
 
-    await saveProjectConfig(type.toLowerCase() as 'frontend' | 'backend', folder);
+    await saveProjectConfig(projectType.toLowerCase() as 'frontend' | 'backend', folder);
 
     const targetPath = path.join(process.cwd(), folder);
 
@@ -44,15 +43,9 @@ export async function createProject(type: ProjectType): Promise<void> {
     await fs.ensureDir(targetPath);
 
     // Create basic project structure based on type
-    if (type === ProjectType.FRONTEND) {
-        const { templateType, customRepo } = await FrontendTemplateService.promptTemplateSelection();
-        await FrontendTemplateService.cloneTemplate(templateType, customRepo, targetPath);
-    } else {
-        const { templateType, customRepo } = await BackendTemplateService.promptTemplateSelection();
-        await BackendTemplateService.cloneTemplate(templateType, customRepo, targetPath);
-    }
-
-    console.log(`✅ ${type} project initialized in ${folder}`);
+    const { templateType, customRepo } = await TemplateService.promptTemplateSelection(projectType);
+    await TemplateService.cloneTemplate(templateType, customRepo, targetPath,projectType);
+    console.log(`✅ ${projectType} project initialized in ${folder}`);
 }
 
 

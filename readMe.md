@@ -17,32 +17,64 @@ npx skaya init
 npx skaya create
 ```
 
-## Features ✨
+> 🚀 **Frontend generation is fully complete and production-ready**  
+> 🔧 **Backend module generation is under active development**
+
+---
+## ✨ Features
 
 ### 🏗️ Project Scaffolding
-- **Frontend Templates**:
-  - `skaya-react-ts` - React + TypeScript
-  - `skaya-vite-ts` - Vite + TypeScript
-  - `skaya-nextjs` - Next.js framework
-  - `skaya-ecommerce` - E-commerce starter
-  - Custom GitHub repositories
 
-- **Backend Templates**:
-  - Express + TypeScript
-  - Prisma ORM integrated
-  - Ready-to-use auth scaffolding
+#### ✅ Frontend Templates Categories
 
-### 🧩 AI-Powered Generation
-- **Frontend Components**:
-  - Smart component generation with AI
-  - Multiple styling options (CSS, SCSS, styled-components)
-  - TypeScript/JavaScript support
-  - Props/State management configuration
+- `skaya-react-ts` – React + TypeScript *(Ready to Use)*
+- `skaya-vite-ts` – Vite + TypeScript *(Coming Soon)*
+- `skaya-nextjs` – Next.js Framework *(Coming Soon)*
+- `skaya-ecommerce` – E-commerce Starter Template *(Coming Soon)*
+- Custom GitHub repository support *(Ready to Use)*
 
-- **Backend Modules**:
-  - Routes with CRUD operations
-  - Controllers with business logic
-  - Middlewares with authentication
+#### 🔧 Backend Templates
+
+- Express.js + TypeScript boilerplate *(Coming Soon)*
+- Integrated Prisma ORM setup *(Coming Soon)*
+- Built-in authentication scaffolding *(Coming Soon)*
+
+---
+
+### 🧩 AI-Powered Code Generation
+
+#### ✅ Frontend Component Generator
+
+- Smart, context-aware component generation via AI
+- **Multiple Language** TypeScript and JavaScript compatibility (tsx,jsx)
+- Choose from multiple styling options: `CSS`, `SCSS`, `styled-components`
+- Configure props, state, and component behavior dynamically
+- Automatically generate:
+  - ✅ **Stories** for each component (Storybook-ready)
+  - ✅ **Tests** with sample unit test templates (Jest or Vitest)
+
+#### 🔧 Backend Module Generator *(In Progress)*
+
+- Auto-generate RESTful routes with full CRUD operations
+- Scaffold controllers with business logic templates
+- Create reusable middleware (e.g., auth, validation)
+- Automated routing integration with custom logic support
+- **Logging system** (using `Winston` or `Pino`) for request tracking and error logging
+- **Swagger/OpenAPI documentation** for all routes
+- **Validation layer** using `Zod` or `Yup`
+- **Error handler middleware** for clean error responses
+
+---
+
+## 📍 Roadmap
+
+- [x] Frontend scaffolding and AI component generator
+- [x] Story and test file generation for components
+- [x] CLI command to manage project lifecycle
+- [ ] Backend project scaffolding and auth modules
+- [ ] Logger integration (Winston or Pino)
+- [ ] Swagger/OpenAPI auto-docs for backend routes
+- [ ] Dashboard for visual project editing *(Future Plan)*
 
 ## Usage 🛠
 

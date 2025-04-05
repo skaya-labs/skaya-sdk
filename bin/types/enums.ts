@@ -27,13 +27,4 @@ export enum BackendComponentType {
  */
 export type ComponentType = FrontendComponentType | BackendComponentType;
 
-/**
-* All frontend repo types
-*/
-export enum FrontendTemplateType {
-  SKAYA_REACT_TS = "skaya-react-ts",
-  SKAYA_VITE_TS = "skaya-vite-ts",
-  SKAYA_NEXTJS = "skaya-nextjs",
-  SKAYA_ECOMMERCE = "skaya-ecommerce",
-  CUSTOM = "custom"
-}
+

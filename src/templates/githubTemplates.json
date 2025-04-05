@@ -4,23 +4,26 @@
     "skaya-vite-ts": "https://github.com/skaya-labs/skaya-vite-ts-template.git",
     "skaya-nextjs": "https://github.com/1cliq/website.git",
     "skaya-ecommerce": "https://github.com/skaya-labs/skaya-ecommerce-template.git",
-    "custom": "custom"
+    "init": "https://github.com/skaya-labs/skaya-frontend-empty-template.git",
+    "custom-repo": "custom-repo"
   },
   "backend": {
     "skaya-backend": "https://github.com/skaya-labs/frontend.git",
-    "skaya-ecommerce": "https://github.com/skaya-labs/skaya-ecommerce-template.git",
-    "custom": "custom"
+    "skaya-ecommerce-backend": "https://github.com/skaya-labs/skaya-ecommerce-template.git",
+    "init": "https://github.com/skaya-labs/skaya-backend-empty-template.git",
+    "custom-repo": "custom-repo"
   },
+
   "frontendCategories": {
-    "skaya-expressjs": ["skaya-react-ts", "skaya-vite-ts", "skaya-nextjs"],
+    "skaya-official": ["skaya-react-ts", "skaya-vite-ts", "skaya-nextjs"],
     "skaya-starter-kit-frontend": ["skaya-ecommerce"],
-    "community": ["custom"],
-    "blank": ["blank"]
+    "blank": ["init"],
+    "custom-repo": ["custom-repo"]
   },
   "backendCategories": {
     "skaya-official": ["skaya-expressjs"],
-    "skaya-starter-kit-backend": ["skaya-ecommerce"],
-    "community": ["custom"],
-    "blank": ["blank"]
+    "skaya-starter-kit-backend": ["skaya-ecommerce-backend"],
+    "blank": ["init"],
+    "custom-repo": ["custom-repo"]
   }
 }
