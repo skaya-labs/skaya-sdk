@@ -3,43 +3,25 @@ import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from '../../bin/types/enums';
 import inquirer from "inquirer";
-import { getTemplateFilesForType } from "../scripts/template";
+import { ComponentGenerationOptions, TemplateFileInfo } from "../scripts/templateGenerator";
 
-interface ComponentFile {
-  fileName: string;
-  content: string;
-}
-
-interface AIComponentGenerationResult {
-  files: ComponentFile[];
-  dependencies: string[];
-}
-
-interface ComponentGenerationOptions {
-  style: 'css' | 'scss' | 'styled-components' | 'none';
-  typescript: boolean;
-  withProps?: boolean;
-  withState?: boolean;
-  withEffects?: boolean;
-  withTests?: boolean;
-  withStories?: boolean;
-}
 
 export async function generateCodeWithAI(
   fileName: string,
   projectType: ProjectType,
   componentType: ComponentType,
   description: string = '',
-  options: ComponentGenerationOptions = { 
-    style: 'css', 
+  options: ComponentGenerationOptions = {
+    style: 'css',
     typescript: true,
     withProps: true,
     withState: false,
     withEffects: false,
     withTests: true,
     withStories: projectType === ProjectType.FRONTEND
-  }
-): Promise<AIComponentGenerationResult> {
+  },
+  templateFiles: TemplateFileInfo[] = []
+): Promise<TemplateFileInfo[]> {
   const { apiKey } = await inquirer.prompt([
     {
       type: 'input',
@@ -49,18 +31,12 @@ export async function generateCodeWithAI(
     },
   ]);
 
-  if (!apiKey) {
-    throw new Error('API key is required.');
-  }
+  if (!apiKey) throw new Error('API key is required.');
 
   const openai = new OpenAI({ apiKey });
 
-  // Get all required files for this component type
-  const requiredFiles = getTemplateFilesForType(componentType);
-  const generatedFiles: ComponentFile[] = [];
-  const dependencies: string[] = [];
+  const updatedFiles: TemplateFileInfo[] = [];
 
-  // Base configuration for all files
   const baseConfig = {
     componentName: fileName,
     description,
@@ -69,72 +45,47 @@ export async function generateCodeWithAI(
     ...options
   };
 
-  // Generate each required file
-  for (const fileTemplate of requiredFiles) {
-    const fileType = path.extname(fileTemplate).replace('.', '');
-    const templatePath = path.join(__dirname, `../templates/ai/${fileType}.prompt`);
-    
-    if (!existsSync(templatePath)) {
-      console.warn(`No AI prompt template found for ${fileType} files`);
+  for (const fileTemplate of templateFiles) {
+    if (!existsSync(fileTemplate.originalFileName)) {
+      console.warn(`Template file not found: ${fileTemplate.originalFileName}`);
       continue;
     }
 
-    const promptTemplate = readFileSync(templatePath, 'utf-8');
-    const filePrompt = buildFilePrompt(promptTemplate, baseConfig, fileTemplate);
+    const originalContent = readFileSync(fileTemplate.originalFileName, 'utf-8');
+    const fileType = path.extname(fileTemplate.originalFileName).replace('.', '');
+    const systemPrompt = getSystemPrompt(fileType, componentType);
+    const userPrompt = buildFilePrompt(originalContent, baseConfig, fileTemplate.originalFileName);
 
-    const response = await generateWithAI(openai, filePrompt, fileType);
-    
-    if (response) {
-      generatedFiles.push({
-        fileName: fileTemplate.replace(/Component/g, fileName),
-        content: response
-      });
-    }
-  }
+    const aiUpdatedContent = await generateWithAI(openai, systemPrompt, userPrompt);
 
-  // Add dependencies based on options
-  if (options.style === 'styled-components') {
-    dependencies.push('styled-components');
-  }
-  if (options.typescript) {
-    dependencies.push('@types/react');
-    dependencies.push('@types/jest');
-  }
-  if (options.withTests) {
-    dependencies.push('@testing-library/react');
-  }
-  if (options.withStories) {
-    dependencies.push('@storybook/react');
+    updatedFiles.push({
+      ...fileTemplate,
+      content: aiUpdatedContent
+    });
   }
 
-  return {
-    files: generatedFiles,
-    dependencies: [...new Set(dependencies)] // Remove duplicates
-  };
+  return updatedFiles;
 }
 
-async function generateWithAI(openai: OpenAI, prompt: string, fileType: string): Promise<string> {
+
+async function generateWithAI(openai: OpenAI, systemPrompt: string, userPrompt: string): Promise<string> {
   try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4',
-      messages: [{
-        role: 'system',
-        content: getSystemPrompt(fileType)
-      }, {
-        role: 'user',
-        content: prompt
-      }],
-      temperature: 0.3, // Lower temperature for more consistent output
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.3,
       max_tokens: 2000
     });
 
     return response.choices[0]?.message?.content?.trim() || '';
   } catch (error) {
-    console.error(`Error generating ${fileType} file:`, error);
+    console.error('Error generating file with AI:', error);
     return '';
   }
 }
-
 function getSystemPrompt(fileType: string, componentType?: ComponentType): string {
   const basePrompt = `You are an expert full-stack developer. Generate clean, production-ready code that:
 - Follows best practices for the specific file type
@@ -148,7 +99,7 @@ function getSystemPrompt(fileType: string, componentType?: ComponentType): strin
   // Handle file extensions first
   switch (fileType) {
     case 'tsx':
-      return componentType === FrontendComponentType.PAGE 
+      return componentType === FrontendComponentType.PAGE
         ? `${basePrompt} for Next.js/Nuxt page components. Include:
            - Proper page-level structure
            - SEO considerations if applicable
@@ -192,7 +143,6 @@ function getSystemPrompt(fileType: string, componentType?: ComponentType): strin
       // Handle backend-specific component types
       if (componentType) {
         switch (componentType) {
-
           case BackendComponentType.ROUTE:
             return `${basePrompt} for API routes. Include:
                     - RESTful design principles
@@ -219,25 +169,34 @@ function getSystemPrompt(fileType: string, componentType?: ComponentType): strin
       return basePrompt;
   }
 }
+
 function buildFilePrompt(
-  template: string,
+  originalFileContent: string,
   config: Record<string, any>,
   originalFileName: string
 ): string {
-  const replacements = {
-    'COMPONENT_NAME': config.componentName,
-    'COMPONENT_TYPE': config.componentType,
-    'DESCRIPTION': config.description,
-    'PROJECT_TYPE': config.projectType,
-    'STYLE_EXTENSION': config.style,
-    'TYPESCRIPT': config.typescript ? 'true' : 'false',
-    'WITH_PROPS': config.withProps ? 'true' : 'false',
-    'WITH_STATE': config.withState ? 'true' : 'false',
-    'WITH_EFFECTS': config.withEffects ? 'true' : 'false',
-    'ORIGINAL_FILENAME': originalFileName
-  };
+  return `
+Update the following file based on the configuration below:
 
-  return Object.entries(replacements).reduce((prompt, [key, value]) => {
-    return prompt.replace(new RegExp(key, 'g'), String(value));
-  }, template);
+Configuration:
+- Component Name: ${config.componentName}
+- Component Type: ${config.componentType}
+- Description: ${config.description}
+- Project Type: ${config.projectType}
+- Style: ${config.style}
+- TypeScript: ${config.typescript}
+- With Props: ${config.withProps}
+- With State: ${config.withState}
+- With Effects: ${config.withEffects}
+- With Tests: ${config.withTests}
+- With Stories: ${config.withStories}
+- Original File Name: ${originalFileName}
+
+File Content:
+\`\`\`
+${originalFileContent}
+\`\`\`
+
+Return only the updated file content. Do not include explanation or markdown syntax.
+`;
 }
