@@ -46,12 +46,13 @@ export async function generateCodeWithAI(
   };
 
   for (const fileTemplate of templateFiles) {
-    if (!existsSync(fileTemplate.originalFileName)) {
-      console.warn(`Template file not found: ${fileTemplate.originalFileName}`);
-      continue;
+const templateFolder = path.join(process.cwd(), 'src', 'templates',projectType,componentType,fileTemplate.originalFileName);
+
+    if (!existsSync(templateFolder)) {
+      throw new Error(`Template file not found: ${fileTemplate} ${templateFolder}`);
     }
 
-    const originalContent = readFileSync(fileTemplate.originalFileName, 'utf-8');
+    const originalContent = readFileSync(templateFolder, 'utf-8');
     const fileType = path.extname(fileTemplate.originalFileName).replace('.', '');
     const systemPrompt = getSystemPrompt(fileType, componentType);
     const userPrompt = buildFilePrompt(originalContent, baseConfig, fileTemplate.originalFileName);
@@ -86,6 +87,7 @@ async function generateWithAI(openai: OpenAI, systemPrompt: string, userPrompt: 
     return '';
   }
 }
+
 function getSystemPrompt(fileType: string, componentType?: ComponentType): string {
   const basePrompt = `You are an expert full-stack developer. Generate clean, production-ready code that:
 - Follows best practices for the specific file type
@@ -100,7 +102,7 @@ function getSystemPrompt(fileType: string, componentType?: ComponentType): strin
   switch (fileType) {
     case 'tsx':
       return componentType === FrontendComponentType.PAGE
-        ? `${basePrompt} for Next.js/Nuxt page components. Include:
+        ? `${basePrompt} for React page components. Include:
            - Proper page-level structure
            - SEO considerations if applicable
            - Data fetching methods if needed

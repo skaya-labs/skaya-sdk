@@ -11,6 +11,6 @@
     "jsx": "preserve",  // This handles JSX files
     "allowJs": true     // This allows JavaScript/JSX files to be included
   },
-  "include": ["src/**/*", "bin/**/*","package.json"],
+  "include": ["src/**/*", "bin/**/*","package.json", "dist/src/templates"],
   "exclude": ["node_modules"]
 }

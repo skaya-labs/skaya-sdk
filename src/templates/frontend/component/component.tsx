@@ -1,8 +1,5 @@
-// Heading.tsx
 import React from 'react';
-import './Heading.css'; 
-export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
-export type HeadingVariation = 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
+import './component.css'; 
 
 export const component: React.FC<{
   className?: string;
