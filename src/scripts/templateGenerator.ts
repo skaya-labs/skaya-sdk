@@ -46,7 +46,7 @@ export async function generateFromTemplate(params: {
     const templateDir = path.join(__dirname, '..', 'templates', projectType.toLowerCase(), componentType);
 
     if (!await fs.pathExists(templateDir)) {
-        throw new Error(`Template directory not found for ${projectType}/${componentType}. Initialize using skaya init.`);
+        throw new Error(`Template directory not found for ${projectType}/${componentType}. ✅ Initialize using skaya init.`);
     }
 
     let templateFiles = await getTemplateFilesForType(componentType, fileName, templateDir);
@@ -176,11 +176,11 @@ export async function getDefaultFolder(
     }
 
     if (projectType === ProjectType.FRONTEND && !config.frontend) {
-        throw new Error("Frontend project type specified, but no 'frontend' config found. Initialize a frontend project with skaya init.");
+        throw new Error("Frontend project type specified, but no 'frontend' config found. ✅ Initialize a frontend project with skaya init.");
     }
 
     if (projectType === ProjectType.BACKEND && !config.backend) {
-        throw new Error("Backend project type specified, but no 'backend' config found. Initialize a frontend project with skaya init.");
+        throw new Error("Backend project type specified, but no 'backend' config found. ✅ Initialize a frontend project with skaya init.");
     }
 
     // Set baseSrcPath based on projectType

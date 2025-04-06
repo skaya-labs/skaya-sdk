@@ -4,6 +4,7 @@ import path from 'path';
 import { BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from '../../bin/types/enums';
 import inquirer from "inquirer";
 import { ComponentGenerationOptions, TemplateFileInfo } from "../scripts/templateGenerator";
+import { getApiKey } from "../config";
 
 
 export async function generateCodeWithAI(
@@ -22,16 +23,9 @@ export async function generateCodeWithAI(
   },
   templateFiles: TemplateFileInfo[] = []
 ): Promise<TemplateFileInfo[]> {
-  const { apiKey } = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'apiKey',
-      message: 'Enter your OpenAI API key:',
-      validate: (apiKey) => !!apiKey || 'API key is required.'
-    },
-  ]);
 
-  if (!apiKey) throw new Error('API key is required.');
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error(`${apiKey} API key is required.`,);
 
   const openai = new OpenAI({ apiKey });
 
