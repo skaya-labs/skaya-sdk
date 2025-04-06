@@ -8,7 +8,7 @@
     "custom-repo": "custom-repo"
   },
   "backend": {
-    "skaya-backend": "https://github.com/skaya-labs/frontend.git",
+    "skaya-backend": "https://github.com/skaya-labs/backend.git",
     "skaya-ecommerce-backend": "https://github.com/skaya-labs/skaya-ecommerce-template.git",
     "init": "https://github.com/skaya-labs/skaya-backend-empty-template.git",
     "custom-repo": "custom-repo"
@@ -21,7 +21,7 @@
     "custom-repo": ["custom-repo"]
   },
   "backendCategories": {
-    "skaya-official": ["skaya-expressjs"],
+    "skaya-official": ["skaya-backend"],
     "skaya-starter-kit-backend": ["skaya-ecommerce-backend"],
     "blank": ["init"],
     "custom-repo": ["custom-repo"]
