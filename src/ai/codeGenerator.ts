@@ -40,13 +40,14 @@ export async function generateCodeWithAI(
   };
 
   for (const fileTemplate of templateFiles) {
-  const templateFolder = path.join(process.cwd(), 'src', 'templates',projectType,componentType,fileTemplate.originalFileName);
+    const templateDir = path.join(__dirname, '..', 'templates', projectType.toLowerCase(), componentType);
+    const sourcePath = path.join(templateDir, fileTemplate.originalFileName);
 
-    if (!existsSync(templateFolder)) {
-      throw new Error(`Template file not found: ${fileTemplate} ${templateFolder}`);
+    if (!existsSync(sourcePath)) {
+        throw new Error(`Template file not found: ${sourcePath}`);
     }
-
-    const originalContent = readFileSync(templateFolder, 'utf-8');
+    
+    const originalContent = readFileSync(sourcePath, 'utf-8');  // Now reading the file, not the directory
     const fileType = path.extname(fileTemplate.originalFileName).replace('.', '');
     const systemPrompt = getSystemPrompt(fileType, componentType);
     const userPrompt = buildFilePrompt(originalContent, baseConfig, fileTemplate.originalFileName);
@@ -54,10 +55,10 @@ export async function generateCodeWithAI(
     const aiUpdatedContent = await generateWithAI(openai, systemPrompt, userPrompt);
 
     updatedFiles.push({
-      ...fileTemplate,
-      content: aiUpdatedContent
+        ...fileTemplate,
+        content: aiUpdatedContent
     });
-  }
+}
 
   return updatedFiles;
 }
