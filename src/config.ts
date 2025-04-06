@@ -7,21 +7,13 @@ import dotenv from 'dotenv';
 // Load .env file if exists
 dotenv.config();
 
+// src/config.ts
 export function getApiKey(): string {
-  // Check in order of priority:
-  // 1. Environment variable
-  // 2. Local .npmrc
-  // 3. Global .npmrc
-  // 4. package.json config
+  // Check environment variable first
+  const envKey = process.env.SKAYA_API_KEY;
+  if (envKey) return envKey;
 
-
-  const npmConfigKey = process.env.npm_config_skaya_api_key;
-  if (npmConfigKey) return npmConfigKey;
-
-  const packageConfigKey = process.env.npm_package_config_skaya_api_key;
-  if (packageConfigKey) return packageConfigKey;
-
-  // Check .npmrc files
+  // Then check .npmrc files
   const checkNpmrc = (filePath: string): string | undefined => {
     if (existsSync(filePath)) {
       const npmrc = readFileSync(filePath, 'utf-8');
@@ -37,12 +29,12 @@ export function getApiKey(): string {
   if (globalNpmrcKey) return globalNpmrcKey;
 
   throw new Error(`
-    ChatGPT API key not found. Please configure it in one of these ways:
+    API key not found. Please configure it in one of these ways:
 
-    1. Local .npmrc file:
+    1. Environment variable (recommended):
+       export SKAYA_API_KEY=your_key_here
+
+    2. Local .npmrc file:
        echo 'skaya_api_key=your_key_here' >> .npmrc
-    
-    2. Global npm config:
-       npm config set skaya_api_key your_key_here
   `);
 }
