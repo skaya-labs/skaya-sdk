@@ -178,8 +178,8 @@ my-backend/
 
 - For development contributions:
 ```
-git clone https://github.com/skaya-ui/skaya-cli.git
-cd skaya-cli
+git clone https://github.com/skaya-labs/skaya-sdk.git
+cd skaya-sdk
 npm install
 npm run build
 npm link

@@ -1,6 +1,6 @@
 {
   "name": "skaya",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "main": "src/action.js",
   "types": "src/action.d.ts",
   "description": "CLI SDK for full-stack automation: scaffold frontend, backend & blockchain. Future-ready for Web3, integrations, server components & logging.",
@@ -37,8 +37,7 @@
   },
   "homepage": "https://github.com/skaya-labs/skaya-sdk#readme",
   "files": [
-    "dist/**/*",
-    "bin/**/*"
+    "dist/**/*"
   ],
   "keywords": [
     "cli",
