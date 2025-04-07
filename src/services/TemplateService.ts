@@ -87,6 +87,15 @@ class TemplateService {
 
       // Remove .git to detach history
       await fs.remove(path.join(targetPath, '.git'));
+      
+      // Initialize new git repo
+      process.chdir(targetPath);
+      execSync('git init', { stdio: 'inherit' });
+      
+      // Add all files and make initial commit
+      execSync('git add .', { stdio: 'inherit' });
+      execSync('git commit -m "Init skaya"', { stdio: 'inherit' });
+      
       console.log(`✅ Successfully initialized project with ${this.formatTemplateName(templateType)} ${kind} template`);
     } catch (error) {
       throw new Error(`❌ Failed to clone ${kind} template: ${error instanceof Error ? error.message : error}`);
