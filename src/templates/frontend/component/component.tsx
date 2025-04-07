@@ -1,7 +1,7 @@
 import React from 'react';
 import './component.css'; 
 
-export const Component: React.FC<{
+export const Component : React.FC<{
   className?: string;
   children?: React.ReactNode;
   style?: React.CSSProperties;

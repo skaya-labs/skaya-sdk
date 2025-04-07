@@ -10,7 +10,7 @@ import path from "path";
 import { ProjectType } from "../bin/types/enums";
 import { ICreateComponentParams } from "../bin/types/interfaces";
 import inquirer from "inquirer";
-import { saveProjectConfig } from "../bin/utils/configLogger";
+import { saveProjectConfig, scanExistingComponents } from "../bin/utils/configLogger";
 import { generateFromTemplate, getDefaultFolder as getTemplateDefaultFolder } from "./scripts/templateGenerator";
 import TemplateService from "./services/TemplateService";
 
@@ -58,6 +58,39 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
     
     const defaultFolder = await getTemplateDefaultFolder(projectType, componentType);
 
+    // Scan for existing components
+    const existingComponents = await scanExistingComponents(componentType);
+    let importExisting = false;
+    let componentsToImport: string[] = [];
+
+    if (existingComponents.length > 0 && projectType === ProjectType.FRONTEND) {
+        const { shouldImport } = await inquirer.prompt([
+            {
+                type: 'confirm',
+                name: 'shouldImport',
+                message: `Would you like to import existing ${componentType} components?`,
+                default: false
+            }
+        ]);
+
+        if (shouldImport) {
+            const { selectedComponents } = await inquirer.prompt([
+                {
+                    type: 'checkbox',
+                    name: 'selectedComponents',
+                    message: `Use spacebar to select one or more ${componentType} components:`,
+                    choices: existingComponents.map(name => ({ name, value: name })),
+                    pageSize: 10 // Optional: shows more at once in terminal
+                }
+            ]);
+
+            componentsToImport = selectedComponents;
+            importExisting = componentsToImport.length > 0;
+
+            console.log(`\n🧩 Selected components: ${componentsToImport.join(', ')}`);
+        }
+    }
+
     const answers = await inquirer.prompt([
         {
             type: "input",
@@ -75,10 +108,16 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
         fileName: finalFileName,
         targetFolder,
         ai,
-        description
+        description,
+        // importExisting,
+        // componentsToImport
     });
 
     for (const filePath of filePaths) {
         console.log(`✅ ${componentType} file created at ${filePath}`);
+    }
+
+    if (importExisting) {
+        console.log(`♻️  Imported existing ${componentType} components: ${componentsToImport.join(', ')}`);
     }
 }
