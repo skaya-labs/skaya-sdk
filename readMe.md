@@ -21,7 +21,7 @@ npm install -g skaya
 ## API Key Configuration 🔑
 
 To use AI-generated code features, you need to set up your Skaya API key using one of these methods:
-
+ - NOTE: use chatgpt apikey right now
 1. Environment variable (recommended):
 ```bash
 export SKAYA_API_KEY=your_key_here
@@ -60,7 +60,7 @@ echo 'skaya_api_key=your_key_here' >> .npmrc
 
 #### ✅ Frontend Component Generator
 
-- Smart, context-aware component generation via AI
+- Smart, context-aware auto generated component generation via AI
 - **Multiple Language** TypeScript and JavaScript compatibility (tsx,jsx)
 - Choose from multiple styling options: `CSS`, `SCSS`, `styled-components`
 - Configure props, state, and component behavior dynamically
