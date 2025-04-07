@@ -21,7 +21,11 @@ export async function generateCodeWithAI(
     withTests: true,
     withStories: projectType === ProjectType.FRONTEND
   },
-  templateFiles: TemplateFileInfo[] = []
+  templateFiles: TemplateFileInfo[] = [],
+  extraOptions: {
+    importExisting?: boolean;
+    componentsToImport?: string[];
+  } = {}
 ): Promise<TemplateFileInfo[]> {
 
   const apiKey = getApiKey();

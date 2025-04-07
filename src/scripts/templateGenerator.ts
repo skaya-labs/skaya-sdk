@@ -38,6 +38,8 @@ export async function generateFromTemplate(params: {
     targetFolder: string;
     ai: boolean;
     description?: string;
+    importExisting?: boolean;
+    componentsToImport?: string[];
 }): Promise<string[]> {
     const { componentType, projectType, fileName, targetFolder, ai, description } = params;
     const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1);
@@ -68,7 +70,11 @@ export async function generateFromTemplate(params: {
             componentType,
             description,
             options,
-            templateFiles
+            templateFiles,
+            {
+                importExisting: params.importExisting,
+                componentsToImport: params.componentsToImport || []
+            }
         );
 
         templateFiles = aiResult;
@@ -100,6 +106,18 @@ export async function generateFromTemplate(params: {
             // 2. When followed by `.` or `:` (e.g., `component.method()` or `component: type`)
             .replace(new RegExp(`(?<!React\\.)\\b${componentType}\\b(?![:])`, 'gi'), pascalCaseName);
             
+                // Inject additional imports if needed
+    if (params.componentsToImport?.length) {
+        const importStatements = params.componentsToImport.map(comp => 
+            `import ${comp} from "@/components/${comp.toLowerCase()}";`
+        ).join('\n');
+
+        // Prepend imports only if file is .tsx or .ts
+        if (templateFile.targetFileName.endsWith('.tsx') || templateFile.targetFileName.endsWith('.ts')) {
+            content = `${importStatements}\n\n${content}`;
+        }
+    }
+
         const targetPath = path.join(process.cwd(), targetFolder, pascalCaseName, templateFile.targetFileName);
         await fs.outputFile(targetPath, content);
         createdFiles.push(targetPath);

@@ -109,8 +109,8 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
         targetFolder,
         ai,
         description,
-        // importExisting,
-        // componentsToImport
+        importExisting,
+        componentsToImport
     });
 
     for (const filePath of filePaths) {
