@@ -1,7 +1,7 @@
 import React from 'react';
 import './component.css'; 
 
-export const component: React.FC<{
+export const Component: React.FC<{
   className?: string;
   children?: React.ReactNode;
   style?: React.CSSProperties;
@@ -21,4 +21,4 @@ export const component: React.FC<{
   );
 };
 
-export default component;
+export default Component;

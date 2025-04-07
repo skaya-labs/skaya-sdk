@@ -86,11 +86,20 @@ export async function generateFromTemplate(params: {
             content = await fs.readFile(sourcePath, 'utf-8');
         }
 
-        content = content.replace(/{{name}}/g, fileName)
-            .replace(/{{Name}}/g, pascalCaseName)
-            .replace(/{{NAME}}/g, fileName.toUpperCase())
-            .replace(new RegExp(`${componentType}`, 'g'), `${pascalCaseName}`)
+     
+        // Handle the special Storybook 'component: Component' case
+        content = content.replace(/component: Component/g, `component: ${pascalCaseName}`);
 
+        // Do general replacements
+        content = content
+            .replace(/{{component}}/g, fileName)
+            .replace(/{{Component}}/g, pascalCaseName)
+            .replace(/{{COMPONENT}}/g, fileName.toUpperCase())
+            // Replace component name but avoid:
+            // 1. When it's part of `React.*` (e.g., `React.Component`, `React.Cvcvcvcvcv`)
+            // 2. When followed by `.` or `:` (e.g., `component.method()` or `component: type`)
+            .replace(new RegExp(`(?<!React\\.)\\b${componentType}\\b(?![:])`, 'gi'), pascalCaseName);
+            
         const targetPath = path.join(process.cwd(), targetFolder, pascalCaseName, templateFile.targetFileName);
         await fs.outputFile(targetPath, content);
         createdFiles.push(targetPath);
