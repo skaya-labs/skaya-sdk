@@ -10,9 +10,10 @@ import path from "path";
 import { ProjectType } from "../bin/types/enums";
 import { ICreateComponentParams } from "../bin/types/interfaces";
 import inquirer from "inquirer";
-import { saveProjectConfig, scanExistingComponents } from "../bin/utils/configLogger";
+import { saveProjectConfig } from "../bin/utils/configLogger";
 import { generateFromTemplate, getDefaultFolder as getTemplateDefaultFolder } from "./scripts/templateGenerator";
 import TemplateService from "./services/TemplateService";
+import { scanExistingComponents } from "../bin/utils/ProjectScanner";
 
 /**
  * Creates a new project scaffold
