@@ -16,6 +16,14 @@ export enum FrontendComponentType {
 }
 
 /**
+ * API type enumeration
+ */
+export enum ApiType {
+  REDUX = "redux",
+  WITHOUT_REDUX = "without-redux"
+}
+
+/**
  * Backend component type enumeration
  */
 export enum BackendComponentType {

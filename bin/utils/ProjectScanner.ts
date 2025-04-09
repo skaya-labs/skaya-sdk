@@ -7,7 +7,7 @@ import { FrontendComponentType } from '../types/enums';
 /**
  * Scans existing components in the frontend project
  */
-export async function scanExistingComponents(componentType: string): Promise<string[]> {
+export async function scanExistingComponents(componentType: string): Promise<any> {
     try {
       const config = await readConfig();
       
@@ -49,7 +49,7 @@ export async function scanExistingComponents(componentType: string): Promise<str
         
         return validComponents;
       } catch (error) {
-          throw new Error(`Failed to read components directory: ${componentsPath}`);
+         console.error(`❌ Failed to read components directory: ${componentsPath}. Unable to send extra components to ai.`);
       }
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : String(error));

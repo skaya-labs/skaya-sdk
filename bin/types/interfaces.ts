@@ -17,3 +17,10 @@ export interface ICreateComponentParams {
   ai:boolean
   aiDesscription?:string
 }
+
+export interface ApiEndpointConfig {
+  apiId: number;
+  withAuth: boolean;
+  url: string;
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+}

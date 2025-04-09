@@ -7,10 +7,12 @@
 
 import fs from "fs-extra";
 import path from "path";
-import { BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from "../../bin/types/enums";
+import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from "../../bin/types/enums";
 import { readConfig } from "../../bin/utils/configLogger";
 import { generateCodeWithAI } from "../ai/codeGenerator";
 import inquirer from "inquirer";
+import { ApiEndpointConfig } from "../../bin/types/interfaces";
+import { handleApiComponentType } from "../services/ApiTemplateService";
 
 export interface ComponentGenerationOptions {
     style: 'css' | 'scss' | 'styled-components' | 'none';
@@ -40,32 +42,43 @@ export async function generateFromTemplate(params: {
     ai: boolean;
     importExisting?: boolean;
     componentsToImport?: string[];
+    componentTypeConfig: {
+        apiType: ApiType
+        apiConfig: ApiEndpointConfig
+    }
+
 }): Promise<string[]> {
     const { componentType, projectType, fileName, targetFolder, ai } = params;
+    // Handle API component type separately
     const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1);
     const createdFiles: string[] = [];
-
     const templateDir = path.join(__dirname, '..', 'templates', projectType.toLowerCase(), componentType);
+
+    if (componentType === FrontendComponentType.API) {
+        return handleApiComponentType(params.componentTypeConfig.apiConfig,params.componentTypeConfig.apiType, projectType,targetFolder, fileName);
+    }
+
+
 
     if (!await fs.pathExists(templateDir)) {
         throw new Error(`Template directory not found for ${projectType}/${componentType}. ✅ Initialize using skaya init.`);
     }
 
     let templateFiles = await getTemplateFilesForType(componentType, fileName, templateDir);
-    let aiDescription=""
+    let aiDescription = ""
     if (ai) {
-        
-          const answers = await inquirer.prompt([
+
+        const answers = await inquirer.prompt([
             {
-              type: 'input',
-              name: 'description',
-              message: 'Enter Ai Prompt on how the files and code should work:',
-              when: () => !aiDescription,
-              default: ''
+                type: 'input',
+                name: 'description',
+                message: 'Enter Ai Prompt on how the files and code should work:',
+                when: () => !aiDescription,
+                default: ''
             }
-          ]);
-          aiDescription = aiDescription || answers.description || '';
-  
+        ]);
+        aiDescription = aiDescription || answers.description || '';
+
         const options: ComponentGenerationOptions = {
             style: 'css',
             typescript: true,
@@ -104,7 +117,7 @@ export async function generateFromTemplate(params: {
             content = await fs.readFile(sourcePath, 'utf-8');
         }
 
-     
+
         // Handle the special Storybook 'component: Component' case
         content = content.replace(/component: Component/g, `component: ${pascalCaseName}`);
 
@@ -117,18 +130,18 @@ export async function generateFromTemplate(params: {
             // 1. When it's part of `React.*` (e.g., `React.Component`, `React.Cvcvcvcvcv`)
             // 2. When followed by `.` or `:` (e.g., `component.method()` or `component: type`)
             .replace(new RegExp(`(?<!React\\.)\\b${componentType}\\b(?![:])`, 'gi'), pascalCaseName);
-            
-                // Inject additional imports if needed
-    if (params.componentsToImport?.length) {
-        const importStatements = params.componentsToImport.map(comp => 
-            `import ${comp} from "@/components/${comp.toLowerCase()}";`
-        ).join('\n');
 
-        // Prepend imports only if file is .tsx or .ts
-        if (templateFile.targetFileName.endsWith('.tsx') || templateFile.targetFileName.endsWith('.ts')) {
-            content = `${importStatements}\n\n${content}`;
+        // Inject additional imports if needed
+        if (params.componentsToImport?.length) {
+            const importStatements = params.componentsToImport.map(comp =>
+                `import ${comp} from "@/components/${comp.toLowerCase()}";`
+            ).join('\n');
+
+            // Prepend imports only if file is .tsx or .ts
+            if (templateFile.targetFileName.endsWith('.tsx') || templateFile.targetFileName.endsWith('.ts')) {
+                content = `${importStatements}\n\n${content}`;
+            }
         }
-    }
 
         const targetPath = path.join(process.cwd(), targetFolder, pascalCaseName, templateFile.targetFileName);
         await fs.outputFile(targetPath, content);
@@ -177,20 +190,20 @@ export async function getTemplateFilesForType(
 function getBaseTemplateFiles(componentType: ComponentType): string[] {
     switch (componentType) {
         case FrontendComponentType.COMPONENT:
-            return [`${FrontendComponentType.COMPONENT}.tsx`, 
-                   `${FrontendComponentType.COMPONENT}.stories.tsx`, 
-                   `${FrontendComponentType.COMPONENT}.test.tsx`, 
-                   `${FrontendComponentType.COMPONENT}.css`];
+            return [`${FrontendComponentType.COMPONENT}.tsx`,
+            `${FrontendComponentType.COMPONENT}.stories.tsx`,
+            `${FrontendComponentType.COMPONENT}.test.tsx`,
+            `${FrontendComponentType.COMPONENT}.css`];
         case FrontendComponentType.PAGE:
-            return [`${FrontendComponentType.PAGE}.tsx`, 
-                   `${FrontendComponentType.PAGE}.test.tsx`, 
-                   `${FrontendComponentType.PAGE}.css`];
+            return [`${FrontendComponentType.PAGE}.tsx`,
+            `${FrontendComponentType.PAGE}.test.tsx`,
+            `${FrontendComponentType.PAGE}.css`];
         case BackendComponentType.ROUTE:
-            return [`${BackendComponentType.ROUTE}.ts`, 
-                   `${BackendComponentType.ROUTE}.test.ts`];
+            return [`${BackendComponentType.ROUTE}.ts`,
+            `${BackendComponentType.ROUTE}.test.ts`];
         case BackendComponentType.CONTROLLER:
-            return [`${BackendComponentType.CONTROLLER}.ts`, 
-                   `${BackendComponentType.CONTROLLER}.test.ts`];
+            return [`${BackendComponentType.CONTROLLER}.ts`,
+            `${BackendComponentType.CONTROLLER}.test.ts`];
         default:
             const exhaustiveCheck: any = componentType;
             throw new Error(`Unhandled component type for getTemplateFilesForType: ${exhaustiveCheck}`);
@@ -228,13 +241,14 @@ export async function getDefaultFolder(
         : `${config.backend}/src`;
 
     // Resolve folder path based on projectType and componentType
-    if (projectType === ProjectType.FRONTEND) {
-        return componentType === FrontendComponentType.PAGE
-            ? `${baseSrcPath}/${FrontendComponentType.PAGE}s`
-            : `${baseSrcPath}/${FrontendComponentType.COMPONENT}s`;
-    }
 
     switch (componentType) {
+        case FrontendComponentType.PAGE:
+            return `${baseSrcPath}/pages`;
+        case FrontendComponentType.COMPONENT:
+            return `${baseSrcPath}/components`;
+        case FrontendComponentType.API:
+            return `${baseSrcPath}/APIs`;
         case BackendComponentType.ROUTE:
             return `${baseSrcPath}/routes`;
         case BackendComponentType.CONTROLLER:

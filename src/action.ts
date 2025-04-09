@@ -7,13 +7,14 @@
 
 import fs from "fs-extra";
 import path from "path";
-import { ProjectType } from "../bin/types/enums";
-import { ICreateComponentParams } from "../bin/types/interfaces";
+import { ApiType, FrontendComponentType, ProjectType } from "../bin/types/enums";
+import { ApiEndpointConfig, ICreateComponentParams } from "../bin/types/interfaces";
 import inquirer from "inquirer";
 import { saveProjectConfig } from "../bin/utils/configLogger";
 import { generateFromTemplate, getDefaultFolder as getTemplateDefaultFolder } from "./scripts/templateGenerator";
 import TemplateService from "./services/TemplateService";
 import { scanExistingComponents } from "../bin/utils/ProjectScanner";
+import { askApiEndpointConfig } from "./services/ApiTemplateService";
 
 /**
  * Creates a new project scaffold
@@ -57,6 +58,30 @@ export async function createProject(projectType: ProjectType): Promise<void> {
 export async function createFile(params: ICreateComponentParams): Promise<void> {
     const { componentType, projectType, fileName, ai } = params;
     
+        // Add API type selection for frontend API components
+        let apiType: ApiType;
+        let apiConfig: ApiEndpointConfig;
+        let componentTypeConfig;
+        if (projectType === ProjectType.FRONTEND && componentType === FrontendComponentType.API) {
+            const { selectedApiType } = await inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'selectedApiType',
+                    message: 'Select API type:',
+                    choices: [
+                        { name: 'API with Redux', value: ApiType.REDUX },
+                        { name: 'API without Redux', value: ApiType.WITHOUT_REDUX }
+                    ],
+                }
+            ]);
+            apiType = selectedApiType;
+            apiConfig = await askApiEndpointConfig();
+            componentTypeConfig={
+                apiType,
+                apiConfig
+            }
+        }
+
     const defaultFolder = await getTemplateDefaultFolder(projectType, componentType);
 
     // Scan for existing components
@@ -64,7 +89,7 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
     let importExisting = false;
     let componentsToImport: string[] = [];
 
-    if (existingComponents.length > 0 && projectType === ProjectType.FRONTEND) {
+    if (existingComponents && existingComponents.length > 0 && projectType === ProjectType.FRONTEND && componentType !== FrontendComponentType.API) {
         const { shouldImport } = await inquirer.prompt([
             {
                 type: 'confirm',
@@ -80,7 +105,7 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
                     type: 'checkbox',
                     name: 'selectedComponents',
                     message: `Use spacebar to select one or more ${componentType} components:`,
-                    choices: existingComponents.map(name => ({ name, value: name })),
+                    choices: existingComponents.map((name: any) => ({ name, value: name })),
                     pageSize: 10 // Optional: shows more at once in terminal
                 }
             ]);
@@ -110,7 +135,8 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
         targetFolder,
         ai,
         importExisting,
-        componentsToImport
+        componentsToImport,
+        componentTypeConfig: componentTypeConfig || { apiType: ApiType.WITHOUT_REDUX, apiConfig: {} as ApiEndpointConfig }
     });
 
     for (const filePath of filePaths) {
