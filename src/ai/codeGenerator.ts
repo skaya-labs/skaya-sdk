@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { readFileSync, existsSync } from 'fs';
 import path from 'path';
-import { BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from '../../bin/types/enums';
+import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from '../../bin/types/enums';
 import { ComponentGenerationOptions, TemplateFileInfo } from "../scripts/templateGenerator";
 import { getApiKey } from "../config";
 
@@ -9,7 +9,7 @@ import { getApiKey } from "../config";
 export async function generateCodeWithAI(
   fileName: string,
   projectType: ProjectType,
-  componentType: ComponentType,
+  componentType: ComponentType | ApiType,
   aiDescription: string = '',
   options: ComponentGenerationOptions = {
     style: 'css',
@@ -86,7 +86,7 @@ async function generateWithAI(openai: OpenAI, systemPrompt: string, userPrompt: 
   }
 }
 
-function getSystemPrompt(fileType: string, componentType?: ComponentType): string {
+function getSystemPrompt(fileType: string, componentType?: ComponentType | ApiType): string {
   const basePrompt = `You are an expert full-stack developer. Generate clean, production-ready code that:
 - Follows best practices for the specific file type
 - Includes proper TypeScript types

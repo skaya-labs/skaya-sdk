@@ -35,7 +35,7 @@ export interface ComponentGenerationOptions {
  */
 
 export async function generateFromTemplate(params: {
-    componentType: ComponentType;
+    componentType: ComponentType | ApiType;
     projectType: ProjectType;
     fileName: string;
     targetFolder: string;
@@ -48,17 +48,20 @@ export async function generateFromTemplate(params: {
     }
 
 }): Promise<string[]> {
-    const { componentType, projectType, fileName, targetFolder, ai } = params;
+    let { componentType, projectType, fileName, targetFolder, ai, componentTypeConfig } = params;
     // Handle API component type separately
     const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1);
     const createdFiles: string[] = [];
-    const templateDir = path.join(__dirname, '..', 'templates', projectType.toLowerCase(), componentType);
+    let templateDir = path.join(__dirname, '..', 'templates', projectType.toLowerCase(), componentType);
 
-    if (componentType === FrontendComponentType.API) {
-        return handleApiComponentType(params.componentTypeConfig.apiConfig,params.componentTypeConfig.apiType, projectType,targetFolder, fileName);
+      if (componentType === FrontendComponentType.API && componentTypeConfig.apiType==ApiType.REDUX) {
+        componentType=componentTypeConfig.apiType
+        templateDir=path.join(__dirname, '..', 'templates', projectType.toLowerCase(), componentTypeConfig.apiType);
+        await handleApiComponentType(componentTypeConfig.apiConfig,componentTypeConfig.apiType, projectType,targetFolder, fileName);
     }
-
-
+    else if (componentType === FrontendComponentType.API) {
+        return handleApiComponentType(componentTypeConfig.apiConfig,componentTypeConfig.apiType, projectType,targetFolder, fileName);
+    }
 
     if (!await fs.pathExists(templateDir)) {
         throw new Error(`Template directory not found for ${projectType}/${componentType}. ✅ Initialize using skaya init.`);
@@ -165,7 +168,7 @@ export interface TemplateFileInfo {
  * @returns {Promise<TemplateFileInfo[]>} Array of template file information
  */
 export async function getTemplateFilesForType(
-    componentType: ComponentType,
+    componentType: ComponentType | ApiType,
     fileName: string,
     templateDir: string
 ): Promise<TemplateFileInfo[]> {
@@ -187,7 +190,7 @@ export async function getTemplateFilesForType(
 }
 
 
-function getBaseTemplateFiles(componentType: ComponentType): string[] {
+function getBaseTemplateFiles(componentType: ComponentType | ApiType): string[] {
     switch (componentType) {
         case FrontendComponentType.COMPONENT:
             return [`${FrontendComponentType.COMPONENT}.tsx`,
@@ -198,6 +201,10 @@ function getBaseTemplateFiles(componentType: ComponentType): string[] {
             return [`${FrontendComponentType.PAGE}.tsx`,
             `${FrontendComponentType.PAGE}.test.tsx`,
             `${FrontendComponentType.PAGE}.css`];
+        case FrontendComponentType.API:
+            return [`${FrontendComponentType.API}.tsx`,]
+        case ApiType.REDUX:
+            return [`${ApiType.REDUX}.tsx`,]
         case BackendComponentType.ROUTE:
             return [`${BackendComponentType.ROUTE}.ts`,
             `${BackendComponentType.ROUTE}.test.ts`];
