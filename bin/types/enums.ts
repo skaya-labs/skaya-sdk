@@ -11,7 +11,8 @@ export enum ProjectType {
  */
 export enum FrontendComponentType {
   COMPONENT = "component",
-  PAGE = "page"
+  PAGE = "page",
+  API= "api"
 }
 
 /**

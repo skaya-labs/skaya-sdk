@@ -2,7 +2,6 @@ import OpenAI from "openai";
 import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from '../../bin/types/enums';
-import inquirer from "inquirer";
 import { ComponentGenerationOptions, TemplateFileInfo } from "../scripts/templateGenerator";
 import { getApiKey } from "../config";
 
@@ -11,7 +10,7 @@ export async function generateCodeWithAI(
   fileName: string,
   projectType: ProjectType,
   componentType: ComponentType,
-  description: string = '',
+  aiDescription: string = '',
   options: ComponentGenerationOptions = {
     style: 'css',
     typescript: true,
@@ -37,7 +36,7 @@ export async function generateCodeWithAI(
 
   const baseConfig = {
     componentName: fileName,
-    description,
+    aiDescription,
     projectType,
     componentType,
     ...options

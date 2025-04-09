@@ -54,7 +54,7 @@ export async function createProject(projectType: ProjectType): Promise<void> {
  * @param {ICreateComponentParams} params - Component creation parameters
  */
 export async function createFile(params: ICreateComponentParams): Promise<void> {
-    const { componentType, projectType, fileName, ai, description } = params;
+    const { componentType, projectType, fileName, ai } = params;
     
     const defaultFolder = await getTemplateDefaultFolder(projectType, componentType);
 
@@ -108,7 +108,6 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
         fileName: finalFileName,
         targetFolder,
         ai,
-        description,
         importExisting,
         componentsToImport
     });

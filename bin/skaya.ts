@@ -79,8 +79,6 @@ program
       let componentType: ComponentType;
       let fileName = options.filename;
       let useAI = options.ai || false;
-      let description = options.description || '';
-
       // Interactive mode
       if (!type && !options.project) {
         const answers = await inquirer.prompt([
@@ -112,13 +110,6 @@ program
             name: 'useAI',
             message: 'Use AI to generate the component?',
             default: true
-          },
-          {
-            type: 'input',
-            name: 'description',
-            message: 'Enter component description:',
-            when: () => !description,
-            default: ''
           }
         ]);
         
@@ -126,8 +117,7 @@ program
         componentType = answers.componentType;
         fileName = fileName || answers.fileName;
         useAI = answers.useAI !== undefined ? answers.useAI : useAI;
-        description = description || answers.description || '';
-      } 
+          } 
       // Partial interactive (project type specified)
       else if (!type && options.project) {
         projectType = options.project.toLowerCase() as ProjectType;
@@ -152,20 +142,12 @@ program
             message: 'Use AI to generate the component?',
             default: useAI,
             when: () => useAI === undefined
-          },
-          {
-            type: 'input',
-            name: 'description',
-            message: 'Enter component description:',
-            when: () => !description,
-            default: ''
           }
         ]);
         
         fileName = fileName || additionalAnswers.fileName;
         useAI = additionalAnswers.useAI !== undefined ? additionalAnswers.useAI : useAI;
-        description = description || additionalAnswers.description || '';
-      }
+          }
       // Non-interactive mode
       else {
         projectType = options.project?.toLowerCase() as ProjectType || ProjectType.FRONTEND;
@@ -195,7 +177,6 @@ program
         projectType,
         fileName,
         ai: useAI,
-        description
       };
 
       await createFile(params);
@@ -204,7 +185,6 @@ program
         componentType,
         projectType,
         fileName,
-        description
       });
       console.log(`✅ Successfully created ${projectType} ${componentType} (${fileName})`);
       if (useAI) {

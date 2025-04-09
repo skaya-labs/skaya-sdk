@@ -10,6 +10,7 @@ import path from "path";
 import { BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from "../../bin/types/enums";
 import { readConfig } from "../../bin/utils/configLogger";
 import { generateCodeWithAI } from "../ai/codeGenerator";
+import inquirer from "inquirer";
 
 export interface ComponentGenerationOptions {
     style: 'css' | 'scss' | 'styled-components' | 'none';
@@ -37,11 +38,10 @@ export async function generateFromTemplate(params: {
     fileName: string;
     targetFolder: string;
     ai: boolean;
-    description?: string;
     importExisting?: boolean;
     componentsToImport?: string[];
 }): Promise<string[]> {
-    const { componentType, projectType, fileName, targetFolder, ai, description } = params;
+    const { componentType, projectType, fileName, targetFolder, ai } = params;
     const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1);
     const createdFiles: string[] = [];
 
@@ -52,8 +52,20 @@ export async function generateFromTemplate(params: {
     }
 
     let templateFiles = await getTemplateFilesForType(componentType, fileName, templateDir);
-
+    let aiDescription=""
     if (ai) {
+        
+          const answers = await inquirer.prompt([
+            {
+              type: 'input',
+              name: 'description',
+              message: 'Enter Ai Prompt on how the files and code should work:',
+              when: () => !aiDescription,
+              default: ''
+            }
+          ]);
+          aiDescription = aiDescription || answers.description || '';
+  
         const options: ComponentGenerationOptions = {
             style: 'css',
             typescript: true,
@@ -68,7 +80,7 @@ export async function generateFromTemplate(params: {
             fileName,
             projectType,
             componentType,
-            description,
+            aiDescription,
             options,
             templateFiles,
             {
@@ -180,7 +192,7 @@ function getBaseTemplateFiles(componentType: ComponentType): string[] {
             return [`${BackendComponentType.CONTROLLER}.ts`, 
                    `${BackendComponentType.CONTROLLER}.test.ts`];
         default:
-            const exhaustiveCheck: never = componentType;
+            const exhaustiveCheck: any = componentType;
             throw new Error(`Unhandled component type for getTemplateFilesForType: ${exhaustiveCheck}`);
     }
 }

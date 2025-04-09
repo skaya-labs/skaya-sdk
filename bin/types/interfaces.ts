@@ -15,5 +15,5 @@ export interface ICreateComponentParams {
   projectType: ProjectType;
   fileName:string
   ai:boolean
-  description:string
+  aiDesscription?:string
 }
