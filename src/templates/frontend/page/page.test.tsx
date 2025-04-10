@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Page from './page'; // Adjust the import path as needed
+import React from 'react';
 
 describe('Page', () => {
   it('renders default content when no children provided', () => {

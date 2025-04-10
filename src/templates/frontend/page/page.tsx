@@ -9,11 +9,12 @@ export const Page : React.FC< {
 }> = ({
   children,
 }) => {
-
   return (
-    <React.Component >
-        {children || <p>Default page content</p>}
-    </React.Component>
+    <div
+    >
+      Default Page Content 
+      {children}
+    </div >
   );
 };
 

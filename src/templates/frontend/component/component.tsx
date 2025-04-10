@@ -12,12 +12,13 @@ export const Component : React.FC<{
 }) => {
   
   return (
-    <React.Component 
+    <div
       className={className}
       style={style}
     >
+      Component 
       {children}
-    </React.Component >
+    </div >
   );
 };
 
