@@ -1,6 +1,6 @@
 {
   "name": "skaya",
-  "version": "1.3.9",
+  "version": "1.4.0",
   "main": "src/action.js",
   "types": "src/action.d.ts",
   "description": "CLI SDK for full-stack automation: scaffold frontend, backend & blockchain. Future-ready for Web3, integrations, server components & logging.",
