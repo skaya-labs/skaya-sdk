@@ -171,12 +171,12 @@ console.log(templateFile);
              // Replace component name but avoid:
     // 1. When it's part of `React.*` (e.g., `React.Component`, `React.Cvcvcvcvcv`)
     // 2. When followed by `.` or `:` (e.g., `component.method()` or `component: type`)
-    .replace(new RegExp(`(?<!React\\.)(\\b|_)${componentType}(?![:.])(\\b|_)`, 'gi'), (match) => {
+    .replace(new RegExp(`(?<!React\\.)(\\b|_)${componentType}(?![:])(\\b|_)`, 'gi'), (match) => {
         // Handle different capitalization cases
         if (match === match.toLowerCase()) {
-            return fileName.toLowerCase();
+            return pascalCaseName
         } else if (match === match.toUpperCase()) {
-            return fileName.toUpperCase();
+            return pascalCaseName
         } else {
             return pascalCaseName;
         }
