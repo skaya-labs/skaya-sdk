@@ -12,10 +12,10 @@ export async function scanExistingComponents(componentType: string): Promise<any
       const config = await readConfig();
       
       if (!config.frontend) {
-        throw new Error('No frontend project configured in config.json');
+        console.error('No frontend project configured in config.json');
       }
   
-      const componentsPath = path.join(process.cwd(), config.frontend, 'src', `${FrontendComponentType.COMPONENT}s`);
+      const componentsPath = path.join(process.cwd(), config.frontend ? config.frontend : "" , 'src', `${FrontendComponentType.COMPONENT}s`);
       
       try {
         // Verify the directory exists first

@@ -78,7 +78,6 @@ program
       let projectType: ProjectType;
       let componentType: ComponentType;
       let fileName = options.filename;
-      let useAI = options.ai || false;
       // Interactive mode
       if (!type && !options.project) {
         const answers = await inquirer.prompt([
@@ -104,20 +103,13 @@ program
             message: 'Enter filename (without extension):',
             when: () => !fileName,
             validate: (input) => !!input || 'Filename is required'
-          },
-          {
-            type: 'confirm',
-            name: 'useAI',
-            message: 'Use AI to generate the component?',
-            default: true
           }
         ]);
         
         projectType = answers.projectType;
         componentType = answers.componentType;
         fileName = fileName || answers.fileName;
-        useAI = answers.useAI !== undefined ? answers.useAI : useAI;
-          } 
+       } 
       // Partial interactive (project type specified)
       else if (!type && options.project) {
         projectType = options.project.toLowerCase() as ProjectType;
@@ -136,18 +128,10 @@ program
             when: () => !fileName,
             validate: (input) => !!input || 'Filename is required'
           },
-          {
-            type: 'confirm',
-            name: 'useAI',
-            message: 'Use AI to generate the component?',
-            default: useAI,
-            when: () => useAI === undefined
-          }
         ]);
         
         fileName = fileName || additionalAnswers.fileName;
-        useAI = additionalAnswers.useAI !== undefined ? additionalAnswers.useAI : useAI;
-          }
+       }
       // Non-interactive mode
       else {
         projectType = options.project?.toLowerCase() as ProjectType || ProjectType.FRONTEND;
@@ -176,8 +160,7 @@ program
         componentType,
         projectType,
         fileName,
-        ai: useAI,
-      };
+       };
 
       await createFile(params);
       // Log the component creation
@@ -187,9 +170,6 @@ program
         fileName,
       });
       console.log(`✅ Successfully created ${projectType} ${componentType} (${fileName})`);
-      if (useAI) {
-        console.log('🔮 AI generation enabled');
-      }
     } catch (error) {
       handleCliError(error as Error, "component creation");
     }

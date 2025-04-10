@@ -39,7 +39,6 @@ export async function generateFromTemplate(params: {
     projectType: ProjectType;
     fileName: string;
     targetFolder: string;
-    ai: boolean;
     importExisting?: boolean;
     componentsToImport?: string[];
     componentTypeConfig: {
@@ -48,7 +47,7 @@ export async function generateFromTemplate(params: {
     }
 
 }): Promise<string[]> {
-    let { componentType, projectType, fileName, targetFolder, ai, componentTypeConfig } = params;
+    let { componentType, projectType, fileName, targetFolder, componentTypeConfig } = params;
     // Handle API component type separately
     const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
     const createdFiles: string[] = [];
@@ -69,19 +68,17 @@ export async function generateFromTemplate(params: {
                 const templateDirReduc = path.join(__dirname, '..', 'templates', projectType.toLowerCase(),componentType,  componentTypeConfig.apiType);
 
                 if (!storeExists || !providerExists) {
-                    console.log("store dont exist creating one");
+                    console.log("store doesn't exist creating one");
 
                     // Create the store directory if it doesn't exist
                     await fs.ensureDir(reduxStorePath);
 
                     // Get base template files for Redux store initialization
                     const baseFiles = getBaseTemplateFiles(ApiType.REDUX);
-                    console.log(baseFiles);
 
                     for (const file of baseFiles) {
                         const sourcePath = path.join(templateDirReduc, file);
                         const targetPath = path.join(targetFolder, file);  // Create target path with filename
-console.log(sourcePath,targetPath);
 
                         if (await fs.pathExists(sourcePath)) {
                             let content = await fs.readFile(sourcePath, 'utf-8');
@@ -107,7 +104,16 @@ console.log(sourcePath,targetPath);
 
     let templateFiles = await getTemplateFilesForType(componentType, fileName, templateDir);
     let aiDescription = ""
-    if (ai) {
+    const answers = await inquirer.prompt([
+    
+      {
+        type: 'confirm',
+        name: 'useAI',
+        message: 'Use AI to generate the component?',
+        default: true
+      }
+    ]);
+    if (answers.useAI) {
 
         const answers = await inquirer.prompt([
             {
@@ -116,7 +122,7 @@ console.log(sourcePath,targetPath);
                 message: 'Enter Ai Prompt on how the files and code should work:',
                 when: () => !aiDescription,
                 default: ''
-            }
+            },
         ]);
         aiDescription = aiDescription || answers.description || '';
 
@@ -281,11 +287,11 @@ export async function getDefaultFolder(
     }
 
     if (projectType === ProjectType.FRONTEND && !config.frontend) {
-        throw new Error("Frontend project type specified, but no 'frontend' config found. ✅ Initialize a frontend project with skaya init.");
+        console.error("Frontend project type specified, but no 'frontend' config found. ✅ Initialize a frontend project with skaya init.");
     }
 
     if (projectType === ProjectType.BACKEND && !config.backend) {
-        throw new Error("Backend project type specified, but no 'backend' config found. ✅ Initialize a frontend project with skaya init.");
+        console.error("Backend project type specified, but no 'backend' config found. ✅ Initialize a frontend project with skaya init.");
     }
 
     // Set baseSrcPath based on projectType

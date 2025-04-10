@@ -56,7 +56,7 @@ export async function createProject(projectType: ProjectType): Promise<void> {
  * @param {ICreateComponentParams} params - Component creation parameters
  */
 export async function createFile(params: ICreateComponentParams): Promise<void> {
-    const { componentType, projectType, fileName, ai } = params;
+    const { componentType, projectType, fileName } = params;
     
         // Add API type selection for frontend API components
         let apiType: ApiType;
@@ -133,7 +133,6 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
         projectType,
         fileName: finalFileName,
         targetFolder,
-        ai,
         importExisting,
         componentsToImport,
         componentTypeConfig: componentTypeConfig || { apiType: ApiType.WITHOUT_REDUX, apiConfig: {} as ApiEndpointConfig }
