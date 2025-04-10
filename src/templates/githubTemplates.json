@@ -1,7 +1,7 @@
 {
   "frontend": {
     "skaya-react-ts": "https://github.com/skaya-labs/frontend.git",
-    "skaya-vite-ts": "https://github.com/skaya-labs/skaya-vite-ts-template.git",
+    "skaya-vite-ts": "https://github.com/skaya-labs/frontend-nextjs.git",
     "skaya-nextjs": "https://github.com/1cliq/website.git",
     "skaya-ecommerce": "https://github.com/skaya-labs/skaya-ecommerce-template.git",
     "init": "https://github.com/skaya-labs/skaya-frontend-empty-template.git",
@@ -9,7 +9,7 @@
   },
   "backend": {
     "skaya-backend": "https://github.com/skaya-labs/backend.git",
-    "skaya-ecommerce-backend": "https://github.com/skaya-labs/skaya-ecommerce-template.git",
+    "skaya-ecommerce-backend": "https://github.com/skaya-labs/skaya-backend-ecommerce-template.git",
     "init": "https://github.com/skaya-labs/skaya-backend-empty-template.git",
     "custom-repo": "custom-repo"
   },
