@@ -72,7 +72,7 @@ export async function handleApiComponentType(
     };
     
     // Format the new endpoint as a string to be added to the file
-    const newEndpointString = `  ${endpointKey}: ${JSON.stringify(newEndpoint, null, 2).replace(/"([^"]+)":/g, '$1:')},`;
+    const newEndpointString = `${endpointKey}: ${JSON.stringify(newEndpoint, null, 2).replace(/"([^"]+)":/g, '$1:')},`;
     
     try {
         let fileContent = '';

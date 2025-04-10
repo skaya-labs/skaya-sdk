@@ -54,13 +54,51 @@ export async function generateFromTemplate(params: {
     const createdFiles: string[] = [];
     let templateDir = path.join(__dirname, '..', 'templates', projectType.toLowerCase(), componentType);
 
-      if (componentType === FrontendComponentType.API && componentTypeConfig.apiType==ApiType.REDUX) {
-        componentType=componentTypeConfig.apiType
-        templateDir=path.join(__dirname, '..', 'templates', projectType.toLowerCase(), componentTypeConfig.apiType);
-        await handleApiComponentType(componentTypeConfig.apiConfig,componentTypeConfig.apiType, projectType,targetFolder, fileName);
+    if (componentType === FrontendComponentType.API && componentTypeConfig.apiType == ApiType.REDUX) {
+        // Check if Redux store files already exist
+        const config = await readConfig();
+        if (config?.frontend) {
+            const reduxStorePath = path.join(process.cwd(), config.frontend, 'src', `APIs`, componentTypeConfig.apiType);
+            const storeFilePath = path.join(reduxStorePath, 'store.tsx');
+            const storeProviderPath = path.join(reduxStorePath, 'storeProvider.tsx');
+
+            try {
+                // Check if store files exist
+                const storeExists = await fs.pathExists(storeFilePath);
+                const providerExists = await fs.pathExists(storeProviderPath);
+                const templateDirReduc = path.join(__dirname, '..', 'templates', projectType.toLowerCase(),componentType,  componentTypeConfig.apiType);
+
+                if (!storeExists || !providerExists) {
+                    console.log("store dont exist creating one");
+
+                    // Create the store directory if it doesn't exist
+                    await fs.ensureDir(reduxStorePath);
+
+                    // Get base template files for Redux store initialization
+                    const baseFiles = getBaseTemplateFiles(ApiType.REDUX);
+                    console.log(baseFiles);
+
+                    for (const file of baseFiles) {
+                        const sourcePath = path.join(templateDirReduc, file);
+                        const targetPath = path.join(targetFolder, file);  // Create target path with filename
+console.log(sourcePath,targetPath);
+
+                        if (await fs.pathExists(sourcePath)) {
+                            let content = await fs.readFile(sourcePath, 'utf-8');
+                            await fs.outputFile(targetPath, content);  // Use targetPath instead of targetFolder
+                            createdFiles.push(targetPath);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("❌ Error checking/initializing Redux store:", error);
+            }
+        }
+        await handleApiComponentType(componentTypeConfig.apiConfig, componentTypeConfig.apiType, projectType, targetFolder, fileName);
+        targetFolder=`${targetFolder}/reduxSlices`
     }
     else if (componentType === FrontendComponentType.API) {
-        return handleApiComponentType(componentTypeConfig.apiConfig,componentTypeConfig.apiType, projectType,targetFolder, fileName);
+        return handleApiComponentType(componentTypeConfig.apiConfig, componentTypeConfig.apiType, projectType, targetFolder, fileName);
     }
 
     if (!await fs.pathExists(templateDir)) {
@@ -110,6 +148,7 @@ export async function generateFromTemplate(params: {
 
     for (const templateFile of templateFiles) {
         let content = templateFile.content;
+console.log(templateFile);
 
         // If AI is not used, read from disk
         if (!content) {
@@ -129,11 +168,19 @@ export async function generateFromTemplate(params: {
             .replace(/{{component}}/g, fileName)
             .replace(/{{Component}}/g, pascalCaseName)
             .replace(/{{COMPONENT}}/g, fileName.toUpperCase())
-            // Replace component name but avoid:
-            // 1. When it's part of `React.*` (e.g., `React.Component`, `React.Cvcvcvcvcv`)
-            // 2. When followed by `.` or `:` (e.g., `component.method()` or `component: type`)
-            .replace(new RegExp(`(?<!React\\.)\\b${componentType}\\b(?![:])`, 'gi'), pascalCaseName);
-
+             // Replace component name but avoid:
+    // 1. When it's part of `React.*` (e.g., `React.Component`, `React.Cvcvcvcvcv`)
+    // 2. When followed by `.` or `:` (e.g., `component.method()` or `component: type`)
+    .replace(new RegExp(`(?<!React\\.)(\\b|_)${componentType}(?![:.])(\\b|_)`, 'gi'), (match) => {
+        // Handle different capitalization cases
+        if (match === match.toLowerCase()) {
+            return fileName.toLowerCase();
+        } else if (match === match.toUpperCase()) {
+            return fileName.toUpperCase();
+        } else {
+            return pascalCaseName;
+        }
+    });
         // Inject additional imports if needed
         if (params.componentsToImport?.length) {
             const importStatements = params.componentsToImport.map(comp =>
@@ -202,9 +249,9 @@ function getBaseTemplateFiles(componentType: ComponentType | ApiType): string[] 
             `${FrontendComponentType.PAGE}.test.tsx`,
             `${FrontendComponentType.PAGE}.css`];
         case FrontendComponentType.API:
-            return [`${FrontendComponentType.API}.tsx`,]
+            return [`${FrontendComponentType.API}Slice.tsx`,]
         case ApiType.REDUX:
-            return [`${ApiType.REDUX}.tsx`,]
+            return [`${ApiType.REDUX}.tsx`,'store.tsx','storeProvider.tsx']
         case BackendComponentType.ROUTE:
             return [`${BackendComponentType.ROUTE}.ts`,
             `${BackendComponentType.ROUTE}.test.ts`];
