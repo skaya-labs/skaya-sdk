@@ -4,7 +4,7 @@ import { configureStore, ThunkAction, Action, Reducer } from '@reduxjs/toolkit';
 const importAllReducers = () => {
   try {
     // For Webpack/Vite environment
-    const reducers = import.meta.glob('@src/APIs/reduxSlices/**/*Slice.ts', { eager: true });
+    const reducers = import.meta.glob('./reduxSlices/**/*Slice.ts', { eager: true });
     // Or for Node.js environment (if using require.context)
     // const reducers = require.context('@src/APIs/reduxSlices', true, /Slice\.ts$/);
     
