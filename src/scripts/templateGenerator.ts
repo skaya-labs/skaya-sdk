@@ -50,7 +50,7 @@ export async function generateFromTemplate(params: {
 }): Promise<string[]> {
     let { componentType, projectType, fileName, targetFolder, ai, componentTypeConfig } = params;
     // Handle API component type separately
-    const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1);
+    const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
     const createdFiles: string[] = [];
     let templateDir = path.join(__dirname, '..', 'templates', projectType.toLowerCase(), componentType);
 
@@ -159,28 +159,24 @@ console.log(templateFile);
             content = await fs.readFile(sourcePath, 'utf-8');
         }
 
-
         // Handle the special Storybook 'component: Component' case
         content = content.replace(/component: Component/g, `component: ${pascalCaseName}`);
 
-        // Do general replacements
-        content = content
-            .replace(/{{component}}/g, fileName)
-            .replace(/{{Component}}/g, pascalCaseName)
-            .replace(/{{COMPONENT}}/g, fileName.toUpperCase())
-             // Replace component name but avoid:
-    // 1. When it's part of `React.*` (e.g., `React.Component`, `React.Cvcvcvcvcv`)
-    // 2. When followed by `.` or `:` (e.g., `component.method()` or `component: type`)
-    .replace(new RegExp(`(?<!React\\.)(\\b|_)${componentType}(?![:])(\\b|_)`, 'gi'), (match) => {
-        // Handle different capitalization cases
-        if (match === match.toLowerCase()) {
-            return pascalCaseName
-        } else if (match === match.toUpperCase()) {
-            return pascalCaseName
-        } else {
+   // Do general replacements
+    content = content
+    .replace(/{{component}}/g, fileName.toLowerCase()) // 'newpage2'
+    .replace(/{{Component}}/g, pascalCaseName) // 'NewPage2'
+    .replace(/{{COMPONENT}}/g, fileName.toUpperCase()) // 'NEWPAGE2'
+
+    // Replace component type references (page -> NewPage2)
+    .replace(
+        new RegExp(`(?<!React\\.)(\\b|_)${componentType}(?![:])(\\b|_)`, 'gi'),
+        (match) => {
             return pascalCaseName;
         }
-    });
+    )
+
+
         // Inject additional imports if needed
         if (params.componentsToImport?.length) {
             const importStatements = params.componentsToImport.map(comp =>
@@ -192,8 +188,11 @@ console.log(templateFile);
                 content = `${importStatements}\n\n${content}`;
             }
         }
-
-        const targetPath = path.join(process.cwd(), targetFolder, pascalCaseName, templateFile.targetFileName);
+        let targetFileName=pascalCaseName
+        if(componentType === FrontendComponentType.PAGE){
+            targetFileName=`${targetFileName}Page`
+        }
+        const targetPath = path.join(process.cwd(), targetFolder, targetFileName, templateFile.targetFileName);
         await fs.outputFile(targetPath, content);
         createdFiles.push(targetPath);
     }
