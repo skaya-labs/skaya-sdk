@@ -9,7 +9,7 @@ import fs from "fs-extra";
 import path from "path";
 import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from "../../bin/types/enums";
 import { readConfig } from "../../bin/utils/configLogger";
-import { generateCodeWithAI } from "../ai/codeGenerator";
+import { generateCodeWithAI } from "../ai/geminiCodeGenerator";
 import inquirer from "inquirer";
 import { ApiEndpointConfig } from "../../bin/types/interfaces";
 import { handleApiComponentType } from "../services/ApiTemplateService";
