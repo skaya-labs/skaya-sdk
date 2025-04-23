@@ -149,7 +149,13 @@ export async function generateFromTemplate(params: {
             }
         );
 
-        templateFiles = aiResult;
+        templateFiles = aiResult.map(file => ({
+            ...file,
+            targetFileName: file.targetFileName.replace(
+                new RegExp(fileName, 'gi'), 
+                (match) => match.charAt(0).toUpperCase() + match.slice(1).toLowerCase()
+            )
+        }));
     }
 
     for (const templateFile of templateFiles) {
@@ -194,6 +200,7 @@ console.log(templateFile);
                 content = `${importStatements}\n\n${content}`;
             }
         }
+        // Determine target file name based on component type
         let targetFileName=pascalCaseName
         if(componentType === FrontendComponentType.PAGE){
             targetFileName=`${targetFileName}Page`

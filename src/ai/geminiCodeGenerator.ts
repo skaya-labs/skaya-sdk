@@ -128,25 +128,42 @@ ${originalContent}
 Return ONLY the updated test file content with no additional explanations.`
             };
 
-        case 'stories.tsx': // Storybook file
+            case 'stories.tsx': // Storybook file
             return {
                 systemPrompt: `${baseSystemPrompt}
-- For Storybook stories only
-- Include comprehensive controls
-- Show multiple interaction states
-- Include documentation`,
-                userPrompt: `Update this Storybook story for the ${baseConfig.componentName} component:
-
-Component Description: ${baseConfig.aiDescription}
-
-Original Story File:
-\`\`\`tsx
-${originalContent}
-\`\`\`
-
-Return ONLY the updated story file content with no additional explanations.`
+        - Generate ONLY Storybook stories following the exact template format
+        - Use StoryObj type for stories
+        - Include proper Meta configuration
+        - Add comprehensive controls
+        - Do NOT include component implementation - this should only be the story configuration`,
+                userPrompt: `Create a Storybook story file for the ${baseConfig.componentName} component following this exact template format:
+        
+        Component Description: ${baseConfig.aiDescription}
+        
+        Template Format:
+        import { Meta, StoryObj } from '@storybook/react';
+        import ${baseConfig.componentName} from './${baseConfig.componentName}';
+        
+        const meta: Meta<typeof ${baseConfig.componentName}> = {
+          title: 'Example/${baseConfig.componentName}',
+          component: ${baseConfig.componentName},
+          tags: ['autodocs'],
+          argTypes: {
+            // Add controls configuration here
+          },
+        };
+        
+        export default meta;
+        type Story = StoryObj<typeof ${baseConfig.componentName}>;
+        
+        export const Default: Story = {
+          args: {
+            // Default props here
+          },
+        };
+        
+        Return ONLY the story file content in this exact format with no additional explanations or component implementation.`
             };
-
         case 'css':
         case 'scss': // Style file
             return {
@@ -191,7 +208,8 @@ async function generateWithGemini(model: any, systemPrompt: string, userPrompt: 
         const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
         const result = await model.generateContent(fullPrompt);
         const response = await result.response;
-        return response.text().trim();
+        const text = response.text().trim();
+        return text.replace(/^```[a-z]*\n/, '').replace(/\n```$/, '');
     } catch (error) {
         console.error('Error generating file with Gemini:', error);
         return '';
