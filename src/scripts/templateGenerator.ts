@@ -13,6 +13,7 @@ import { generateCodeWithAI } from "../ai/geminiCodeGenerator";
 import inquirer from "inquirer";
 import { ApiEndpointConfig } from "../../bin/types/interfaces";
 import { handleApiComponentType } from "../services/ApiTemplateService";
+import { promisify } from "util";
 
 export interface ComponentGenerationOptions {
     style: 'css' | 'scss' | 'styled-components' | 'none';
@@ -65,7 +66,7 @@ export async function generateFromTemplate(params: {
                 // Check if store files exist
                 const storeExists = await fs.pathExists(storeFilePath);
                 const providerExists = await fs.pathExists(storeProviderPath);
-                const templateDirReduc = path.join(__dirname, '..', 'templates', projectType.toLowerCase(),componentType,  componentTypeConfig.apiType);
+                const templateDirReduc = path.join(__dirname, '..', 'templates', projectType.toLowerCase(), componentType, componentTypeConfig.apiType);
 
                 if (!storeExists || !providerExists) {
                     console.log("store doesn't exist creating one");
@@ -92,7 +93,7 @@ export async function generateFromTemplate(params: {
             }
         }
         await handleApiComponentType(componentTypeConfig.apiConfig, componentTypeConfig.apiType, projectType, targetFolder, fileName);
-        targetFolder=`${targetFolder}/reduxSlices`
+        targetFolder = `${targetFolder}/reduxSlices`
     }
     else if (componentType === FrontendComponentType.API) {
         return handleApiComponentType(componentTypeConfig.apiConfig, componentTypeConfig.apiType, projectType, targetFolder, fileName);
@@ -105,13 +106,13 @@ export async function generateFromTemplate(params: {
     let templateFiles = await getTemplateFilesForType(componentType, fileName, templateDir);
     let aiDescription = ""
     const answers = await inquirer.prompt([
-    
-      {
-        type: 'confirm',
-        name: 'useAI',
-        message: 'Use AI to generate the component?',
-        default: true
-      }
+
+        {
+            type: 'confirm',
+            name: 'useAI',
+            message: 'Use AI to generate the component?',
+            default: true
+        }
     ]);
     if (answers.useAI) {
 
@@ -152,7 +153,7 @@ export async function generateFromTemplate(params: {
         templateFiles = aiResult.map(file => ({
             ...file,
             targetFileName: file.targetFileName.replace(
-                new RegExp(fileName, 'gi'), 
+                new RegExp(fileName, 'gi'),
                 (match) => match.charAt(0).toUpperCase() + match.slice(1).toLowerCase()
             )
         }));
@@ -160,7 +161,6 @@ export async function generateFromTemplate(params: {
 
     for (const templateFile of templateFiles) {
         let content = templateFile.content;
-console.log(templateFile);
 
         // If AI is not used, read from disk
         if (!content) {
@@ -174,20 +174,19 @@ console.log(templateFile);
         // Handle the special Storybook 'component: Component' case
         content = content.replace(/component: Component/g, `component: ${pascalCaseName}`);
 
-   // Do general replacements
-    content = content
-    .replace(/{{component}}/g, fileName.toLowerCase()) // 'newpage2'
-    .replace(/{{Component}}/g, pascalCaseName) // 'NewPage2'
-    .replace(/{{COMPONENT}}/g, fileName.toUpperCase()) // 'NEWPAGE2'
+        // Do general replacements
+        content = content
+            .replace(/{{component}}/g, fileName.toLowerCase()) // 'newpage2'
+            .replace(/{{Component}}/g, pascalCaseName) // 'NewPage2'
+            .replace(/{{COMPONENT}}/g, fileName.toUpperCase()) // 'NEWPAGE2'
 
-    // Replace component type references (page -> NewPage2)
-    .replace(
-        new RegExp(`(?<!React\\.)(\\b|_)${componentType}(?![:])(\\b|_)`, 'gi'),
-        (match) => {
-            return pascalCaseName;
-        }
-    )
-
+            // Replace component type references (page -> NewPage2)
+            .replace(
+                new RegExp(`(?<!React\\.)(\\b|_)${componentType}(?![:])(\\b|_)`, 'gi'),
+                (match) => {
+                    return pascalCaseName;
+                }
+            )
 
         // Inject additional imports if needed
         if (params.componentsToImport?.length) {
@@ -201,9 +200,9 @@ console.log(templateFile);
             }
         }
         // Determine target file name based on component type
-        let targetFileName=pascalCaseName
-        if(componentType === FrontendComponentType.PAGE){
-            targetFileName=`${targetFileName}Page`
+        let targetFileName = pascalCaseName
+        if (componentType === FrontendComponentType.PAGE) {
+            targetFileName = `${targetFileName}Page`
         }
         const targetPath = path.join(process.cwd(), targetFolder, targetFileName, templateFile.targetFileName);
         await fs.outputFile(targetPath, content);
@@ -219,12 +218,15 @@ export interface TemplateFileInfo {
     content?: string;
 }
 
+
+const readFile = promisify(fs.readFile);
+
 /**
  * Gets template files for a specific component type with their contents
  * @param {ComponentType} componentType - The type of component
  * @param {string} fileName - The name of the file to use for replacements
  * @param {string} templateDir - The directory where templates are located
- * @returns {Promise<TemplateFileInfo[]>} Array of template file information
+ * @returns {Promise<TemplateFileInfo[]>} Array of template file information with contents
  */
 export async function getTemplateFilesForType(
     componentType: ComponentType | ApiType,
@@ -239,14 +241,28 @@ export async function getTemplateFilesForType(
 
     for (const file of baseFiles) {
         const targetFileName = file.replace(new RegExp(componentType, 'gi'), formattedFileName);
-        result.push({
-            originalFileName: file,
-            targetFileName
-        });
+        const filePath = path.join(templateDir, file);
+
+        try {
+            const content = await readFile(filePath, 'utf-8');
+            result.push({
+                originalFileName: file,
+                targetFileName,
+                content
+            });
+        } catch (error) {
+            console.error(`Error reading template file ${filePath}:`, error);
+            result.push({
+                originalFileName: file,
+                targetFileName,
+                content: '' // Fallback empty content if file can't be read
+            });
+        }
     }
 
     return result;
 }
+
 
 
 function getBaseTemplateFiles(componentType: ComponentType | ApiType): string[] {
@@ -263,7 +279,7 @@ function getBaseTemplateFiles(componentType: ComponentType | ApiType): string[] 
         case FrontendComponentType.API:
             return [`${FrontendComponentType.API}Slice.tsx`,]
         case ApiType.REDUX:
-            return [`${ApiType.REDUX}.tsx`,'store.tsx','storeProvider.tsx']
+            return [`${ApiType.REDUX}.tsx`, 'store.tsx', 'storeProvider.tsx']
         case BackendComponentType.ROUTE:
             return [`${BackendComponentType.ROUTE}.ts`,
             `${BackendComponentType.ROUTE}.test.ts`];
