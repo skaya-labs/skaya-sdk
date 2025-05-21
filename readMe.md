@@ -21,7 +21,7 @@ npm install -g skaya
 ## API Key Configuration 🔑
 
 To use AI-generated code features, you need to set up your Skaya API key using one of these methods:
- - NOTE: use chatgpt apikey right now
+ - NOTE: use gemini apikey right now
 1. Environment variable (recommended):
 ```bash
 export SKAYA_API_KEY=your_key_here
