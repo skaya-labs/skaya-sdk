@@ -41,7 +41,7 @@ export async function generateFromTemplate(params: {
     fileName: string;
     targetFolder: string;
     importExisting?: boolean;
-    componentsToImport?: string[];
+    componentsToImport?: {name: string, data: string}[]
     componentTypeConfig: {
         apiType: ApiType
         apiConfig: ApiEndpointConfig
@@ -190,13 +190,14 @@ export async function generateFromTemplate(params: {
 
         // Inject additional imports if needed
         if (params.componentsToImport?.length) {
-            const importStatements = params.componentsToImport.map(comp =>
-                `import ${comp} from "@/components/${comp.toLowerCase()}";`
-            ).join('\n');
+            // const importStatements = params.componentsToImport.map(comp =>
+            //     `import ${comp} from "@/components/${comp.name}";`
+            // ).join('\n');
 
             // Prepend imports only if file is .tsx or .ts
             if (templateFile.targetFileName.endsWith('.tsx') || templateFile.targetFileName.endsWith('.ts')) {
-                content = `${importStatements}\n\n${content}`;
+                content = `${content}`;
+                // content = `${importStatements}\n\n${content}`;
             }
         }
         // Determine target file name based on component type

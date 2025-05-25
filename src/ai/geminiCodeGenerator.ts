@@ -22,15 +22,16 @@ export async function generateCodeWithAI(
     templateFiles: TemplateFileInfo[] = [],
     extraOptions: {
         importExisting?: boolean;
-        componentsToImport?: string[];
+        componentsToImport?: {name: string, data: string}[]
+
     } = {}
 ): Promise<TemplateFileInfo[]> {
-
+    
     const apiKey = getApiKey();
     if (!apiKey) throw new Error(`API key is required.`);
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const updatedFiles: TemplateFileInfo[] = [];
 
@@ -60,10 +61,10 @@ export async function generateCodeWithAI(
         baseConfig,
         componentFile.originalFileName,
         componentFile.targetFileName,
+        extraOptions.componentsToImport
     );
 
     const componentContent = await generateWithGemini(model, componentSystemPrompt, componentUserPrompt);
-    console.log('Generated component:', componentContent);
 
     updatedFiles.push({
         ...componentFile,
@@ -82,11 +83,11 @@ export async function generateCodeWithAI(
             baseConfig,
             fileTemplate.originalFileName,
             fileTemplate.targetFileName,
-            componentContent // Pass the generated component content
+            extraOptions.componentsToImport,
+            componentContent, // Pass the generated component content
         );
 
         const aiUpdatedContent = await generateWithGemini(model, systemPrompt, userPrompt);
-        console.log(`Generated ${fileType}:`, aiUpdatedContent);
 
         updatedFiles.push({
             ...fileTemplate,
@@ -104,7 +105,9 @@ function getFileSpecificPrompts(
     baseConfig: any,
     originalFileName: string,
     targetFileName: string,
-    componentContent?: string // New parameter for the generated component content
+    componentsToImport?: {name: string, data: string}[],
+    componentContent?: string, // New parameter for the generated component content
+
 ): { systemPrompt: string; userPrompt: string } {
     // Base system prompt
     const baseSystemPrompt = `You are an expert full-stack developer. Generate clean, production-ready code that:
@@ -115,9 +118,11 @@ function getFileSpecificPrompts(
 - Uses the correct target file name (${targetFileName}) for all references`;
 
     // Extract base component name without extension
-    const targetComponentName = targetFileName.replace(/\..+$/, '');
     const isTestFile = originalFileName.includes('.test.');
     const isStoriesFile = originalFileName.includes('.stories.');
+
+    // Create imports string if componentsToImport exists
+
 
     // File-specific prompts
     if (isTestFile) {
@@ -129,7 +134,7 @@ function getFileSpecificPrompts(
 - Test all component functionality
 - Keep the same testing approach as shown in the original file
 - Import the component using the target file name (${targetFileName})`,
-            userPrompt: `Generate a test file for the following ${targetComponentName} component while maintaining consistent theming:
+            userPrompt: `Generate a test file for the following ${targetFileName} component while maintaining consistent theming:
 
 Component Description: ${baseConfig.aiDescription}
 Component Type: ${baseConfig.componentType}
@@ -137,13 +142,16 @@ Target File Name: ${targetFileName}
 
 Component Content:
 ${componentContent}
+Component To Import:
+${componentsToImport}
+
 
 Key Requirements:
 1. Import the component from '${targetFileName}'
-2. Create comprehensive tests that cover all functionality
-3. Test all props and interactions
-4. Use Testing Library best practices
-5. Include accessibility tests if applicable
+3. Create comprehensive tests that cover all functionality
+4. Test all props and interactions
+5. Use Testing Library best practices
+6. Include accessibility tests if applicable
 
 Return ONLY the test file content with no additional explanations.`
         };
@@ -156,21 +164,20 @@ Return ONLY the test file content with no additional explanations.`
 - Add comprehensive controls that match the component's theme
 - Maintain the same story structure as the original
 - Import the component using the target file name (${targetFileName})`,
-            userPrompt: `Generate a Storybook story file for the following ${targetComponentName} component with Component Content:
+            userPrompt: `Generate a Storybook story file for the following ${targetFileName} component with Component Content:
 ${componentContent}:
 
 Component Description: ${baseConfig.aiDescription}
 Component Type: ${baseConfig.componentType}
 Target File Name: ${targetFileName}
-
-
-
+Component To Import:
+${componentsToImport}
 Key Requirements:
 1. Import the component from '${targetFileName}'
-2. Create a default story with all controls and props from ${componentContent}
-3. Add relevant stories that showcase different states
-4. Include proper JSDoc documentation
-5. Use TypeScript types for all args
+3. Create a default story with all controls and props from ${componentContent}
+4. Add relevant stories that showcase different states
+5. Include proper JSDoc documentation
+6. Use TypeScript types for all args
 
 Return ONLY the story file content with no additional explanations.`
         };
@@ -178,25 +185,28 @@ Return ONLY the story file content with no additional explanations.`
         return {
             systemPrompt: `${baseSystemPrompt}
 - For React components only
-- Include proper TypeScript types
-- Use clean JSX syntax
+- Include proper TypeScript types and props. take help from mui props but dont import anything from mui.
+- Use clean TSX syntax
 - Follow accessibility best practices
 - Match the style of the original component
-- Use ${targetComponentName} as the component name`,
+- Use ${targetFileName} as the component name`,
             userPrompt: `Create a React component file based on the following requirements:
 
-Component Name: ${targetComponentName}
-Description: ${baseConfig.aiDescription}
+Component Name: ${targetFileName}
+Description: ${baseConfig.aiDescription}. Add Proper styling with className for multiple screen size.
 Component Type: ${baseConfig.componentType}
-Style Type: ${baseConfig.style}
+Style Type: Provide css className with  ${targetFileName}.css . later I will add css file
 Target File Name: ${targetFileName}
-import css as ${targetFileName}.css
+Component To Import:
+${componentsToImport}
+Import componentToImport as "@/components/${targetFileName}/${targetFileName}"
+
 Key Requirements:
 1. Use TypeScript with proper typing
 2. Follow React best practices
 3. Include all necessary props
 4. Implement the described functionality: ${baseConfig.aiDescription}
-5. Use ${baseConfig.style} for styling
+6. Provide css className later I will add css file. make sure to import ${targetFileName}.css
 
 Return ONLY the component code with no additional explanations.`
         };
@@ -208,16 +218,14 @@ Return ONLY the component code with no additional explanations.`
 - Include responsive design
 - Follow BEM naming if appropriate
 - Match the existing styling patterns
-- Update selectors to match ${targetComponentName}`,
-            userPrompt: `Generate a style file for the following ${targetComponentName} component from Component Content:
+- Update selectors to match ${targetFileName}`,
+            userPrompt: `Generate a style file for the following ${targetFileName} component from Component Content:
 ${componentContent}:
 
 Component Description: ${baseConfig.aiDescription}
 Component Type: ${baseConfig.componentType}
 Style Type: ${baseConfig.style}
 Target File Name: ${targetFileName}
-
-
 
 Key Requirements:
 1. Create styles that match the component structure
@@ -233,7 +241,7 @@ Return ONLY the style rules with no additional explanations.`
             systemPrompt: baseSystemPrompt,
             userPrompt: `Generate this file based on the following requirements:
         
-Component Name: ${targetComponentName}
+Component Name: ${targetFileName}
 Description: ${baseConfig.aiDescription}
 Component Type: ${baseConfig.componentType}
 Target File Name: ${targetFileName}
