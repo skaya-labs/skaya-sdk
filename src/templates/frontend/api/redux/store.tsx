@@ -4,14 +4,14 @@ import { configureStore, ThunkAction, Action, Reducer } from '@reduxjs/toolkit';
 const importAllReducers = () => {
   try {
     // For Webpack/Vite environment
-    const reducers = import.meta.glob('./reduxSlices/**/*Slice.ts', { eager: true });
+    const reducers = import.meta.glob('./redux/**/*Slice.ts', { eager: true });
     // Or for Node.js environment (if using require.context)
-    // const reducers = require.context('@src/APIs/reduxSlices', true, /Slice\.ts$/);
+    // const reducers = require.context('@src/APIs/redux', true, /Slice\.ts$/);
     
     const modules: Record<string, Reducer> = {};
     
     for (const path in reducers) {
-      const match = path.match(/reduxSlices\/(.*?)\/(.*?)Slice\.ts/);
+      const match = path.match(/redux\/(.*?)\/(.*?)Slice\.ts/);
       if (match) {
         const [, folder, sliceName] = match;
         const reducerName = folder || sliceName;

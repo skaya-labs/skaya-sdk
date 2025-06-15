@@ -1,6 +1,6 @@
-// @src/APIs/reduxSlices/api/apiSlice.ts
+// @src/APIs/redux/api/apiSlice.ts
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-import Request from '@/services/Request'; // Import the Request utility
+import Request from './backendRequest'; // Import the Request utility
 
 // Define the shape of your state
 interface ApiState {
@@ -82,8 +82,8 @@ const apiSlice = createSlice({
 
 // Export actions and selectors
 export const { resetApiState, setApiData } = apiSlice.actions;
-export const selectApiData = (state: { api: ApiState }) => state.api.data;
-export const selectApiLoading = (state: { api: ApiState }) => state.api.loading;
-export const selectApiError = (state: { api: ApiState }) => state.api.error;
+export const selectApiData = (state: { apiState : ApiState }) => state.apiState.data;
+export const selectApiLoading = (state: { apiState : ApiState }) => state.apiState.loading;
+export const selectApiError = (state: { apiState : ApiState }) => state.apiState.error;
 
 export default apiSlice.reducer;

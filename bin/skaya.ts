@@ -44,7 +44,8 @@ program
             message: 'Please select a project type first:',
             choices: [
               { name: 'Frontend', value: ProjectType.FRONTEND },
-              { name: 'Backend', value: ProjectType.BACKEND }
+              { name: 'Backend', value: ProjectType.BACKEND },
+              { name: 'Smart Contract', value: ProjectType.SMART_CONTRACT }
             ],
           }
         ]);

@@ -93,7 +93,7 @@ export async function generateFromTemplate(params: {
             }
         }
         await handleApiComponentType(componentTypeConfig.apiConfig, componentTypeConfig.apiType, projectType, targetFolder, fileName);
-        targetFolder = `${targetFolder}/reduxSlices`
+        targetFolder = `${targetFolder}/redux`
     }
     else if (componentType === FrontendComponentType.API) {
         return handleApiComponentType(componentTypeConfig.apiConfig, componentTypeConfig.apiType, projectType, targetFolder, fileName);

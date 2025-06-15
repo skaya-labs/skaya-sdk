@@ -21,10 +21,9 @@ import { askApiEndpointConfig } from "./services/ApiTemplateService";
  * @param {ProjectType} projectType - The type of project to create
  */
 export async function createProject(projectType: ProjectType): Promise<void> {
-    const defaultFolder = projectType === ProjectType.FRONTEND
-        ? "frontend-app"
-        : "backend-app";
-
+ 
+    const defaultFolder = getDefaultFolder(projectType);
+    // Prompt for project folder name
     const { folder } = await inquirer.prompt([
         {
             type: "input",
@@ -48,6 +47,16 @@ export async function createProject(projectType: ProjectType): Promise<void> {
     const { templateType, customRepo } = await TemplateService.promptTemplateSelection(projectType);
     await TemplateService.cloneTemplate(templateType, customRepo, targetPath,projectType);
     console.log(`✅ ${projectType} project initialized in ${folder}`);
+}
+
+
+function getDefaultFolder(projectType: ProjectType): string {
+    switch (projectType) {
+        case ProjectType.FRONTEND: return "frontend-app";
+        case ProjectType.BACKEND: return "backend-app";
+        case ProjectType.SMART_CONTRACT: return "smart-contract";
+        default: return "my-project";
+    }
 }
 
 
