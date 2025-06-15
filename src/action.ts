@@ -22,6 +22,11 @@ import { askApiEndpointConfig } from "./services/ApiTemplateService";
  */
 export async function createProject(projectType: ProjectType): Promise<void> {
  
+        if (projectType === ProjectType.BACKEND || projectType === ProjectType.SMART_CONTRACT) {
+        console.log(`⚠️  ${projectType} component creation is coming soon!`);
+        return;
+    }
+
     const defaultFolder = getDefaultFolder(projectType);
     // Prompt for project folder name
     const { folder } = await inquirer.prompt([
@@ -53,8 +58,8 @@ export async function createProject(projectType: ProjectType): Promise<void> {
 function getDefaultFolder(projectType: ProjectType): string {
     switch (projectType) {
         case ProjectType.FRONTEND: return "frontend-app";
-        // case ProjectType.BACKEND: return "backend-app";
-        // case ProjectType.SMART_CONTRACT: return "smart-contract";
+        case ProjectType.BACKEND: return "backend-app";
+        case ProjectType.SMART_CONTRACT: return "smart-contract";
         default: return "my-project";
     }
 }
@@ -66,7 +71,10 @@ function getDefaultFolder(projectType: ProjectType): string {
  */
 export async function createFile(params: ICreateComponentParams): Promise<void> {
     const { componentType, projectType, fileName } = params;
-    
+        if (projectType === ProjectType.BACKEND || projectType === ProjectType.SMART_CONTRACT) {
+        console.log(`⚠️  ${projectType} component creation is coming soon!`);
+        return;
+    }
     // Add API type selection for frontend API components
     let apiType: ApiType;
     let apiConfig: ApiEndpointConfig;

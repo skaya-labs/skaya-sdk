@@ -314,9 +314,9 @@ export async function getDefaultFolder(
         console.error("Frontend project type specified, but no 'frontend' config found. ✅ Initialize a frontend project with skaya init.");
     }
 
-    // if (projectType === ProjectType.BACKEND && !config.backend) {
-    //     console.error("Backend project type specified, but no 'backend' config found. ✅ Initialize a frontend project with skaya init.");
-    // }
+    if (projectType === ProjectType.BACKEND && !config.backend) {
+        console.error("Backend project type specified, but no 'backend' config found. ✅ Initialize a frontend project with skaya init.");
+    }
 
     // Set baseSrcPath based on projectType
     const baseSrcPath = projectType === ProjectType.FRONTEND

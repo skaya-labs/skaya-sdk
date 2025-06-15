@@ -44,8 +44,8 @@ program
             message: 'Please select a project type first:',
             choices: [
               { name: 'Frontend', value: ProjectType.FRONTEND },
-              // { name: 'Backend', value: ProjectType.BACKEND },
-              // { name: 'Smart Contract', value: ProjectType.SMART_CONTRACT }
+              { name: 'Backend', value: ProjectType.BACKEND },
+              { name: 'Smart Contract', value: ProjectType.SMART_CONTRACT }
             ],
           }
         ]);
@@ -54,7 +54,7 @@ program
 
       if (type && !isValidProjectType(type)) {
         throw new Error(
-          `Invalid project type "${type}".`
+          `Invalid project type "${type}". Use '${ProjectType.FRONTEND}' or '${ProjectType.BACKEND}'.`
         );
       }
   
@@ -70,7 +70,7 @@ program
   .command("create [type]")
   .allowUnknownOption()
   .description("Create a new component (interactive mode if no type specified)")
-  .option(`-p, --project <type>", "Project type (${ProjectType.FRONTEND} })`)
+  .option(`-p, --project <type>", "Project type (${ProjectType.FRONTEND} or ${ProjectType.BACKEND})`)
   .option("-f, --filename <name>", "Filename for the component")
   .option("-a, --ai <boolean>", "Use AI to generate the component", false)
   .option("-d, --description <text>", "Description of the component")
@@ -115,7 +115,7 @@ program
       else if (!type && options.project) {
         projectType = options.project.toLowerCase() as ProjectType;
         if (!isValidProjectType(projectType)) {
-          throw new Error(`Invalid project type.`);
+          throw new Error(`Invalid project type. Use '${ProjectType.FRONTEND}' or '${ProjectType.BACKEND}'.`);
         }
 
         componentType = await promptComponentType(projectType);
@@ -138,18 +138,15 @@ program
         projectType = options.project?.toLowerCase() as ProjectType || ProjectType.FRONTEND;
         
         if (!isValidProjectType(projectType)) {
-          throw new Error(`Invalid project type. `);
+          throw new Error(`Invalid project type. Use '${ProjectType.FRONTEND}' or '${ProjectType.BACKEND}'.`);
         }
 
         if (projectType === ProjectType.FRONTEND && type && !isValidFrontendComponent(type)) {
           throw new Error(`Invalid frontend componene. Ust type. Use '${Object.values(FrontendComponentType).join("' or '")}'.`);
         }
-
-
-        //todo: add backend component validation
-        // if (projectType === ProjectType.BACKEND && type && !isValidBackendComponent(type)) {
-        //   throw new Error(`Invalid backend component type '${Object.values(BackendComponentType).join("' or '")}'.`);
-        // }
+        if (projectType === ProjectType.BACKEND && type && !isValidBackendComponent(type)) {
+          throw new Error(`Invalid backend component type '${Object.values(BackendComponentType).join("' or '")}'.`);
+        }
         componentType = type as ComponentType;
         
         // Validate required fields in non-interactive mode
@@ -173,7 +170,6 @@ program
         projectType,
         fileName,
       });
-      console.log(`✅ Successfully created ${projectType} ${componentType} (${fileName})`);
     } catch (error) {
       handleCliError(error as Error, "component creation");
     }
