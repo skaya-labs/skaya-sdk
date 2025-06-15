@@ -53,8 +53,8 @@ export async function createProject(projectType: ProjectType): Promise<void> {
 function getDefaultFolder(projectType: ProjectType): string {
     switch (projectType) {
         case ProjectType.FRONTEND: return "frontend-app";
-        case ProjectType.BACKEND: return "backend-app";
-        case ProjectType.SMART_CONTRACT: return "smart-contract";
+        // case ProjectType.BACKEND: return "backend-app";
+        // case ProjectType.SMART_CONTRACT: return "smart-contract";
         default: return "my-project";
     }
 }

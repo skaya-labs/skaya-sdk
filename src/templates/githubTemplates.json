@@ -1,8 +1,8 @@
 {
   "frontend": {
     "skaya-react-ts": "https://github.com/skaya-labs/frontend.git",
-    "skaya-vite-ts": "https://github.com/skaya-labs/frontend-nextjs.git",
-    "skaya-nextjs": "https://github.com/1cliq/website.git",
+    "skaya-vite-ts": "https://github.com/skaya-labs/frontend-vite.git",
+    "skaya-nextjs": "https://github.com/skaya-labs/frontend-nextjs.git",
     "skaya-ecommerce": "https://github.com/skaya-labs/skaya-ecommerce-template.git",
     "init": "https://github.com/skaya-labs/skaya-frontend-empty-template.git",
     "custom-repo": "custom-repo"

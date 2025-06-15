@@ -3,8 +3,8 @@
  */
 export enum ProjectType {
   FRONTEND = "frontend",
-  BACKEND = "backend",
-  SMART_CONTRACT = "smart-contract"
+  // BACKEND = "backend",
+  // SMART_CONTRACT = "smart-contract"
 }
 
 /**
