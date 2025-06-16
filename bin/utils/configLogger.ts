@@ -1,7 +1,7 @@
 // src/utils/configLogger.ts
 import { promises as fs } from 'fs';
 
-const CONFIG_FILE = 'config.json';
+const CONFIG_FILE = 'skaya.config.json';
 const LOG_FILE = 'component_creation.log';
 
 interface ProjectConfig {

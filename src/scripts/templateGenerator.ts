@@ -8,12 +8,11 @@
 import fs from "fs-extra";
 import path from "path";
 import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from "../../bin/types/enums";
-import { readConfig } from "../../bin/utils/configLogger";
 import { generateCodeWithAI } from "../ai/geminiCodeGenerator";
 import inquirer from "inquirer";
-import { ApiEndpointConfig } from "../../bin/types/interfaces";
-import { handleApiComponentType } from "../services/ApiTemplateService";
 import { promisify } from "util";
+import { getDefaultFolder } from "../../bin/utils/ProjectScanner";
+import { handleApiComponentType } from "./FolderCreator/FrontendFileCreator/Api";
 
 export interface ComponentGenerationOptions {
     style: 'css' | 'scss' | 'styled-components' | 'none';
@@ -25,8 +24,14 @@ export interface ComponentGenerationOptions {
     withStories?: boolean;
 }
 
+export interface TemplateFileInfo {
+    originalFileName: string;
+    targetFileName: string;
+    content?: string;
+}
+
 /**
- * Generates component files from templates
+ * Generates component files from templates or AI
  * @param {Object} params - Generation parameters
  * @param {ComponentType} params.componentType - The type of component to generate
  * @param {ProjectType} params.projectType - The project type (frontend/backend)
@@ -34,81 +39,30 @@ export interface ComponentGenerationOptions {
  * @param {string} params.targetFolder - The target folder path
  * @returns {Promise<string[]>} Array of created file paths
  */
-
 export async function generateFromTemplate(params: {
     componentType: ComponentType | ApiType;
     projectType: ProjectType;
     fileName: string;
     targetFolder?: string;
     importExisting?: boolean;
-    componentsToImport?: {name: string, data: string}[]
-    componentTypeConfig: {
-        apiType: ApiType
-        apiConfig: ApiEndpointConfig
-    }
-
+    componentsToImport?: { name: string, data: string }[]
 }): Promise<string[]> {
-      let targetFolder = params.targetFolder || `skaya${params.projectType}`;
+    let { componentType, projectType, fileName } = params;
+    let targetFolder = params.targetFolder || await getDefaultFolder(projectType, componentType);
     
-    let { componentType, projectType, fileName, componentTypeConfig } = params;
-    // Handle API component type separately
-    const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
-    const createdFiles: string[] = [];
-    let templateDir = path.join(__dirname, '..', 'templates', projectType.toLowerCase(), componentType);
+    // !important= Handle API component type separately
 
-    if (componentType === FrontendComponentType.API && componentTypeConfig.apiType == ApiType.REDUX) {
-        // Check if Redux store files already exist
-        const config = await readConfig();
-        if (config?.frontend) {
-            const reduxStorePath = path.join(process.cwd(), config.frontend.name, 'src', `APIs`, componentTypeConfig.apiType);
-            const storeFilePath = path.join(reduxStorePath, 'store.tsx');
-            const storeProviderPath = path.join(reduxStorePath, 'storeProvider.tsx');
-
-            try {
-                // Check if store files exist
-                const storeExists = await fs.pathExists(storeFilePath);
-                const providerExists = await fs.pathExists(storeProviderPath);
-                const templateDirReduc = path.join(__dirname, '..', 'templates', projectType.toLowerCase(), componentType, componentTypeConfig.apiType);
-
-                if (!storeExists || !providerExists) {
-                    console.log("store doesn't exist creating one");
-
-                    // Create the store directory if it doesn't exist
-                    await fs.ensureDir(reduxStorePath);
-
-                    // Get base template files for Redux store initialization
-                    const baseFiles = getBaseTemplateFiles(ApiType.REDUX);
-
-                    for (const file of baseFiles) {
-                        const sourcePath = path.join(templateDirReduc, file);
-                        const targetPath = path.join(targetFolder, file);  // Create target path with filename
-
-                        if (await fs.pathExists(sourcePath)) {
-                            let content = await fs.readFile(sourcePath, 'utf-8');
-                            await fs.outputFile(targetPath, content);  // Use targetPath instead of targetFolder
-                            createdFiles.push(targetPath);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error("❌ Error checking/initializing Redux store:", error);
-            }
-        }
-        await handleApiComponentType(componentTypeConfig.apiConfig, componentTypeConfig.apiType, projectType, targetFolder, fileName);
-        targetFolder = `${targetFolder}/redux`
-    }
-    else if (componentType === FrontendComponentType.API) {
-        return handleApiComponentType(componentTypeConfig.apiConfig, componentTypeConfig.apiType, projectType, targetFolder, fileName);
+    if (componentType === FrontendComponentType.API) {
+        return handleApiComponentType(projectType, targetFolder, fileName);
     }
 
+    const templateDir = path.join(__dirname, '..', 'templates', projectType.toLowerCase(), componentType);
     if (!await fs.pathExists(templateDir)) {
         throw new Error(`Template directory not found for ${projectType}/${componentType}. ✅ Initialize using skaya init.`);
     }
 
     let templateFiles = await getTemplateFilesForType(componentType, fileName, templateDir);
-    let aiDescription = ""
-    const answers = await inquirer.prompt([
-
+       const answers = await inquirer.prompt([
         {
             type: 'confirm',
             name: 'useAI',
@@ -116,97 +70,130 @@ export async function generateFromTemplate(params: {
             default: true
         }
     ]);
-    if (answers.useAI) {
-
-        const answers = await inquirer.prompt([
-            {
-                type: 'input',
-                name: 'description',
-                message: 'Enter Ai Prompt on how the files and code should work:',
-                when: () => !aiDescription,
-                default: ''
-            },
-        ]);
-        aiDescription = aiDescription || answers.description || '';
-
-        const options: ComponentGenerationOptions = {
-            style: 'css',
-            typescript: true,
-            withProps: true,
-            withState: false,
-            withEffects: false,
-            withTests: true,
-            withStories: projectType === ProjectType.FRONTEND
-        };
-
-        const aiResult = await generateCodeWithAI(
+    if(answers.useAI) {
+        templateFiles = await generateWithAI({
             fileName,
             projectType,
             componentType,
-            aiDescription,
-            options,
             templateFiles,
-            {
-                importExisting: params.importExisting,
-                componentsToImport: params.componentsToImport || []
-            }
-        );
-
-        templateFiles = aiResult.map(file => ({
-            ...file,
-            targetFileName: file.targetFileName.replace(
-                new RegExp(fileName, 'gi'),
-                (match) => match.charAt(0).toUpperCase() + match.slice(1).toLowerCase()
-            )
-        }));
+            importExisting: params.importExisting,
+            componentsToImport: params.componentsToImport
+        });
     }
+
+    return saveTemplateFiles({
+        templateFiles,
+        fileName,
+        targetFolder,
+        componentType
+    });
+}
+
+/**
+ * Generates component files using AI
+ * @param {Object} params - Generation parameters
+ * @param {string} params.fileName - The base name for the component
+ * @param {ProjectType} params.projectType - The project type (frontend/backend)
+ * @param {ComponentType} params.componentType - The type of component to generate
+ * @param {TemplateFileInfo[]} params.templateFiles - Template files information
+ * @param {boolean} params.importExisting - Whether to import existing components
+ * @param {Array} params.componentsToImport - Components to import
+ * @returns {Promise<TemplateFileInfo[]>} Array of template file information with AI-generated content
+ */
+async function generateWithAI(params: {
+    fileName: string;
+    projectType: ProjectType;
+    componentType: ComponentType | ApiType;
+    templateFiles: TemplateFileInfo[];
+    importExisting?: boolean;
+    componentsToImport?: { name: string, data: string }[];
+}): Promise<TemplateFileInfo[]> {
+    const { fileName, projectType, componentType, templateFiles } = params;
+    
+    const answers = await inquirer.prompt([
+        {
+            type: 'input',
+            name: 'description',
+            message: 'Enter AI Prompt on how the files and code should work:',
+            default: ''
+        },
+    ]);
+    
+    const aiDescription = answers.description || '';
+    const options: ComponentGenerationOptions = {
+        style: 'css',
+        typescript: true,
+        withProps: true,
+        withState: false,
+        withEffects: false,
+        withTests: true,
+        withStories: projectType === ProjectType.FRONTEND
+    };
+
+    const aiResult = await generateCodeWithAI(
+        fileName,
+        projectType,
+        componentType,
+        aiDescription,
+        options,
+        templateFiles,
+        {
+            importExisting: params.importExisting,
+            componentsToImport: params.componentsToImport || []
+        }
+    );
+
+    return aiResult.map(file => ({
+        ...file,
+        targetFileName: file.targetFileName.replace(
+            new RegExp(fileName, 'gi'),
+            (match) => match.charAt(0).toUpperCase() + match.slice(1).toLowerCase()
+        )
+    }));
+}
+
+/**
+ * Saves template files to disk
+ * @param {Object} params - Saving parameters
+ * @param {TemplateFileInfo[]} params.templateFiles - Template files to save
+ * @param {string} params.fileName - The base name for the component
+ * @param {string} params.targetFolder - The target folder path
+ * @param {ComponentType} params.componentType - The type of component
+ * @returns {Promise<string[]>} Array of created file paths
+ */
+async function saveTemplateFiles(params: {
+    templateFiles: TemplateFileInfo[];
+    fileName: string;
+    targetFolder: string;
+    componentType: ComponentType | ApiType;
+}): Promise<string[]> {
+    const { templateFiles, fileName, targetFolder, componentType } = params;
+    const createdFiles: string[] = [];
+    const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
 
     for (const templateFile of templateFiles) {
         let content = templateFile.content;
-
-        // If AI is not used, read from disk
-        if (!content) {
-            const sourcePath = path.join(templateDir, templateFile.originalFileName);
-            if (!await fs.pathExists(sourcePath)) {
-                throw new Error(`Template file ${templateFile.originalFileName} not found in ${templateDir}`);
-            }
-            content = await fs.readFile(sourcePath, 'utf-8');
-        }
+        if (!content) continue; // Skip if no content provided
 
         // Handle the special Storybook 'component: Component' case
         content = content.replace(/component: Component/g, `component: ${pascalCaseName}`);
 
         // Do general replacements
         content = content
-            .replace(/{{component}}/g, fileName.toLowerCase()) // 'newpage2'
-            .replace(/{{Component}}/g, pascalCaseName) // 'NewPage2'
-            .replace(/{{COMPONENT}}/g, fileName.toUpperCase()) // 'NEWPAGE2'
-
-            // Replace component type references (page -> NewPage2)
+            .replace(/{{component}}/g, fileName.toLowerCase())
+            .replace(/{{Component}}/g, pascalCaseName)
+            .replace(/{{COMPONENT}}/g, fileName.toUpperCase())
             .replace(
                 new RegExp(`(?<!React\\.)(\\b|_)${componentType}(?![:])(\\b|_)`, 'gi'),
-                (match) => {
-                    return pascalCaseName;
-                }
-            )
+                (match) => pascalCaseName
+            );
 
-        // Inject additional imports if needed
-        if (params.componentsToImport?.length) {
-            // const importStatements = params.componentsToImport.map(comp =>
-            //     `import ${comp} from "@/components/${comp.name}";`
-            // ).join('\n');
-
-            // Prepend imports only if file is .tsx or .ts
-            if (templateFile.targetFileName.endsWith('.tsx') || templateFile.targetFileName.endsWith('.ts')) {
-                content = `${content}`;
-                // content = `${importStatements}\n\n${content}`;
-            }
-        }
         // Determine target file name based on component type
-        let targetFileName = pascalCaseName
+        let targetFileName = pascalCaseName;
         if (componentType === FrontendComponentType.PAGE) {
-            targetFileName = `${targetFileName}Page`
+            targetFileName = `${targetFileName}Page`;
         }
+        
         const targetPath = path.join(process.cwd(), targetFolder, targetFileName, templateFile.targetFileName);
         await fs.outputFile(targetPath, content);
         createdFiles.push(targetPath);
@@ -215,11 +202,6 @@ export async function generateFromTemplate(params: {
     return createdFiles;
 }
 
-export interface TemplateFileInfo {
-    originalFileName: string;
-    targetFileName: string;
-    content?: string;
-}
 
 
 const readFile = promisify(fs.readFile);
@@ -238,8 +220,6 @@ export async function getTemplateFilesForType(
 ): Promise<TemplateFileInfo[]> {
     const baseFiles = getBaseTemplateFiles(componentType);
     const result: TemplateFileInfo[] = [];
-
-    // Capitalize first letter, lowercase the rest
     const formattedFileName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
 
     for (const file of baseFiles) {
@@ -266,32 +246,37 @@ export async function getTemplateFilesForType(
     return result;
 }
 
-
-
-function getBaseTemplateFiles(componentType: ComponentType | ApiType): string[] {
+export function getBaseTemplateFiles(componentType: ComponentType | ApiType): string[] {
     switch (componentType) {
         case FrontendComponentType.COMPONENT:
-            return [`${FrontendComponentType.COMPONENT}.tsx`,
-            `${FrontendComponentType.COMPONENT}.stories.tsx`,
-            `${FrontendComponentType.COMPONENT}.test.tsx`,
-            `${FrontendComponentType.COMPONENT}.css`];
+            return [
+                `${FrontendComponentType.COMPONENT}.tsx`,
+                `${FrontendComponentType.COMPONENT}.stories.tsx`,
+                `${FrontendComponentType.COMPONENT}.test.tsx`,
+                `${FrontendComponentType.COMPONENT}.css`
+            ];
         case FrontendComponentType.PAGE:
-            return [`${FrontendComponentType.PAGE}.tsx`,
-            `${FrontendComponentType.PAGE}.test.tsx`,
-            `${FrontendComponentType.PAGE}.css`];
+            return [
+                `${FrontendComponentType.PAGE}.tsx`,
+                `${FrontendComponentType.PAGE}.test.tsx`,
+                `${FrontendComponentType.PAGE}.css`
+            ];
         case FrontendComponentType.API:
-            return [`${FrontendComponentType.API}Slice.tsx`,]
+            return [`${FrontendComponentType.API}Slice.tsx`];
         case ApiType.REDUX:
-            return [`${ApiType.REDUX}.tsx`, 'store.tsx', 'storeProvider.tsx']
+            return [`${ApiType.REDUX}.tsx`, 'store.tsx', 'storeProvider.tsx'];
         case BackendComponentType.ROUTE:
-            return [`${BackendComponentType.ROUTE}.ts`,
-            `${BackendComponentType.ROUTE}.test.ts`];
+            return [
+                `${BackendComponentType.ROUTE}.ts`,
+                `${BackendComponentType.ROUTE}.test.ts`
+            ];
         case BackendComponentType.CONTROLLER:
-            return [`${BackendComponentType.CONTROLLER}.ts`,
-            `${BackendComponentType.CONTROLLER}.test.ts`];
+            return [
+                `${BackendComponentType.CONTROLLER}.ts`,
+                `${BackendComponentType.CONTROLLER}.test.ts`
+            ];
         default:
             const exhaustiveCheck: any = componentType;
             throw new Error(`Unhandled component type for getTemplateFilesForType: ${exhaustiveCheck}`);
     }
 }
-

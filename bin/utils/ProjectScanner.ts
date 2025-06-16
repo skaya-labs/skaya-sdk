@@ -1,7 +1,7 @@
 import path from "path";
 import { readConfig } from "./configLogger";
 import { promises as fs } from 'fs';
-import { BackendComponentType, FrontendComponentType, ProjectType } from '../types/enums';
+import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from '../types/enums';
 
 
 /**
@@ -71,7 +71,7 @@ export async function scanExistingComponents(projectType: ProjectType,
  */
 export async function getDefaultFolder(
     projectType: ProjectType,
-    componentType?: FrontendComponentType | BackendComponentType
+    componentType?: ComponentType | ApiType
 ): Promise<string> {
     const config = await readConfig();
 
@@ -81,20 +81,24 @@ export async function getDefaultFolder(
     }
 
     if (projectType === ProjectType.FRONTEND && !config.frontend) {
-        console.error("Frontend project type specified, but no 'frontend' config found. ✅ Initialize a frontend project with skaya init.");
+        console.warn("Frontend config not found. Setting default.");
+        config.frontend = { name: createDefaultFolder(ProjectType.FRONTEND), template: "" };
     }
 
     if (projectType === ProjectType.BACKEND && !config.backend) {
-        console.error("Backend project type specified, but no 'backend' config found. ✅ Initialize a Backend project with skaya init.");
-    }
-    if (projectType === ProjectType.SMART_CONTRACT && !config.smartContract) {
-        console.error("Smart Contract type specified, but no 'smart Contract' config found. ✅ Initialize a Smart Contract with skaya init.");
+        console.warn("Backend config not found. Setting default.");
+        config.backend = { name: createDefaultFolder(ProjectType.BACKEND), template: "" };
     }
 
+    if (projectType === ProjectType.SMART_CONTRACT && !config.smartContract) {
+        console.warn("Smart Contract config not found. Setting default.");
+        config.smartContract = { name: createDefaultFolder(ProjectType.SMART_CONTRACT), template: "" };
+    }
+    if(config.frontend && config.backend && config.smartContract) {
     // Set baseSrcPath based on projectType
     const baseSrcPath = projectType === ProjectType.FRONTEND
-        ? `${config.frontend}/src`
-        : `${config.backend}/src`;
+        ? `${config.frontend.name}/src`
+        : `${config.backend.name}/src`;
 
     // Resolve folder path based on projectType and componentType
     switch (componentType) {
@@ -110,5 +114,19 @@ export async function getDefaultFolder(
             return `${baseSrcPath}/${BackendComponentType.CONTROLLER}s`;
         default:
             return baseSrcPath;
+    }
+}
+else{
+    return createDefaultFolder(projectType);
+}
+}
+
+
+function createDefaultFolder(projectType: ProjectType): string {
+    switch (projectType) {
+        case ProjectType.FRONTEND: return "skaya-frontend-app";
+        case ProjectType.BACKEND: return "skaya-backend-app";
+        case ProjectType.SMART_CONTRACT: return "skaya-smart-contract";
+        default: return "skaya-project";
     }
 }
