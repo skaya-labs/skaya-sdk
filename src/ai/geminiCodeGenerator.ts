@@ -1,7 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { readFileSync, existsSync } from 'fs';
 import path from 'path';
-import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from '../../bin/types/enums';
+import { ApiType, ComponentType, ProjectType } from '../../bin/types/enums';
 import { ComponentGenerationOptions, TemplateFileInfo } from "../scripts/templateGenerator";
 import { getApiKey } from "../config";
 

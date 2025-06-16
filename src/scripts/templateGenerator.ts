@@ -200,8 +200,6 @@ async function saveTemplateFiles(params: {
     return createdFiles;
 }
 
-const readFile = promisify(fs.readFile);
-
 /**
  * Gets template files for a specific component type with their contents
  * @param {ComponentType} componentType - The type of component
@@ -223,7 +221,7 @@ export async function getTemplateFilesForType(
         const filePath = path.join(templateDir, file);
 
         try {
-            const content = await readFile(filePath, 'utf-8');
+            const content = await promisify(fs.readFile)(filePath, 'utf-8');
             result.push({
                 originalFileName: file,
                 targetFileName,
