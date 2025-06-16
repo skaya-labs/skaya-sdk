@@ -1,5 +1,8 @@
 // src/utils/configLogger.ts
 import { promises as fs } from 'fs';
+import path from 'path';
+import { ProjectType } from '../types/enums';
+import { getDefaultFolder } from './ProjectScanner';
 
 const CONFIG_FILE = 'skaya.config.json';
 const LOG_FILE = 'component_creation.log';
@@ -18,32 +21,37 @@ interface Config {
 }
 
 /**
- * Saves project type (frontend/backend) to config.json
- * @param type - Project type (frontend or backend)
+ * Saves project type (frontend/backend) to config.json in both process.cwd() and config file
+ * @param projectType - Project type (frontend or backend)
  * @param name - Name of the project
+ * @param template - Template to use (optional)
  */
-export async function saveProjectConfig(type: 'frontend' | 'backend', name: string, template?: string): Promise<void> {
+export async function saveProjectConfig(projectType: ProjectType, name: string, template?: string): Promise<void> {
   try {
     let config: Config = {};
+    const configPath = path.join(process.cwd(),"../", CONFIG_FILE);
+    console.log("saving to",configPath);
     
     // Try to read existing config if it exists
     try {
-      const data = await fs.readFile(CONFIG_FILE, 'utf-8');
+      const data = await fs.readFile(configPath, 'utf-8');
       config = JSON.parse(data);
     } catch (error) {
       // File doesn't exist or is invalid, we'll create a new one
     }
     
     // Update the config
-    config[type] = {
+    config[projectType] = {
       name,
-      template: template || 'custom',
+      template: template || "custom",
       createdAt: new Date().toISOString()
     };
     
-    // Write the updated config
+    // Write the updated config to both locations
     await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2));
-    console.log(`✅ Configuration saved to ${CONFIG_FILE}`);
+    await fs.writeFile(configPath, JSON.stringify(config, null, 2));
+    
+    console.log(`✅ Configuration saved to ${CONFIG_FILE} and ${configPath}`);
   } catch (error) {
     console.error('❌ Failed to save configuration:', error);
     throw error;
@@ -83,7 +91,8 @@ export async function logComponentCreation(params: {
  */
 export async function readConfig(): Promise<Config> {
   try {
-    const data = await fs.readFile(CONFIG_FILE, 'utf-8');
+    const configPath = path.join(process.cwd(), CONFIG_FILE);
+    const data = await fs.readFile(configPath, 'utf-8');
     return JSON.parse(data);
   } catch (error) {
     return {};

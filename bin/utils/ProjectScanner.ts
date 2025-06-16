@@ -2,16 +2,19 @@ import path from "path";
 import { readConfig } from "./configLogger";
 import { promises as fs } from 'fs';
 import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from '../types/enums';
+import { getBaseTemplateFiles } from "../../src/scripts/templateGenerator";
 
 
 /**
  * Scans existing components in the frontend project
  */
-export async function scanExistingComponents(projectType: ProjectType,
-    componentType: FrontendComponentType | BackendComponentType): Promise<Array<{name: string, data: string}>> {
+export async function scanExistingComponents(
+    projectType: ProjectType,
+    componentType: FrontendComponentType | BackendComponentType
+): Promise<Array<{ name: string, data: string }>> {
     try {
-        const componentsPath =await getDefaultFolder(projectType, componentType);
-        
+        const componentsPath = `${process.cwd()}/${await getDefaultFolder(projectType, componentType)}`;
+
         try {
             // Verify the directory exists first
             await fs.access(componentsPath);
@@ -24,19 +27,35 @@ export async function scanExistingComponents(projectType: ProjectType,
                 .map(dirent => dirent.name);
 
             // Array to hold components with their data
-            const componentsWithData: Array<{name: string, data: string}> = [];
-            
+            const componentsWithData: Array<{ name: string, data: string }> = [];
+
             for (const dir of componentDirs) {
                 const componentDirPath = path.join(componentsPath, dir);
-                const componentFiles = await fs.readdir(componentDirPath);
-                
-                // Determine the main component file
-                const mainFile = componentFiles.find(file => 
-                    file === `${componentType}.tsx` || 
-                    file === `${dir}.tsx` || 
-                    file === 'index.tsx'
+                let componentFiles;
+
+                try {
+                    componentFiles = await fs.readdir(componentDirPath);
+                } catch (error) {
+                    console.error(`❌ Failed to read directory ${dir}:`, error);
+                    continue;
+                }
+
+                // More flexible main file detection
+                   const possibleMainFiles = getBaseTemplateFiles(componentType)
+                    .map(file => file.replace(new RegExp(componentType, 'gi'), dir))
+                    .concat([ // Add common fallbacks
+                        `${dir}.tsx`, 
+                        `${dir}.jsx`,
+                        `${dir.charAt(0).toUpperCase() + dir.slice(1)}.tsx`,
+                        'index.tsx'
+                    ]);
+
+
+                const mainFile = possibleMainFiles.find(file =>
+                    componentFiles.includes(file) ||
+                    componentFiles.includes(path.basename(file))
                 );
-                
+
                 if (mainFile) {
                     try {
                         const filePath = path.join(componentDirPath, mainFile);
@@ -48,6 +67,10 @@ export async function scanExistingComponents(projectType: ProjectType,
                     } catch (error) {
                         console.error(`❌ Failed to read component file in ${dir}: ${error}`);
                     }
+                } else {
+                    console.warn(`⚠️ No main file found for component ${dir} in ${componentDirPath}`);
+                    console.warn(`ℹ️ Looked for:`, possibleMainFiles);
+                    console.warn(`ℹ️ Found files:`, componentFiles);
                 }
             }
             
@@ -94,12 +117,22 @@ export async function getDefaultFolder(
         console.warn("Smart Contract config not found. Setting default.");
         config.smartContract = { name: createDefaultFolder(ProjectType.SMART_CONTRACT), template: "" };
     }
-    if(config.frontend && config.backend && config.smartContract) {
-    // Set baseSrcPath based on projectType
-    const baseSrcPath = projectType === ProjectType.FRONTEND
-        ? `${config.frontend.name}/src`
-        : `${config.backend.name}/src`;
-
+    let baseSrcPath: string;
+    if (config.frontend) {
+        // Set baseSrcPath based on projectType
+        baseSrcPath = `${config.frontend.name}/src`
+    }
+    else if (config.backend) {
+        // Set baseSrcPath based on projectType
+        baseSrcPath = `${config.backend.name}/src`
+    }
+    else if (config.smartContract) {
+        // Set baseSrcPath based on projectType
+        baseSrcPath = `${config.smartContract.name}/src`
+    }
+    else {
+        baseSrcPath = `${createDefaultFolder(projectType)}/src`
+    }
     // Resolve folder path based on projectType and componentType
     switch (componentType) {
         case FrontendComponentType.PAGE:
@@ -115,14 +148,11 @@ export async function getDefaultFolder(
         default:
             return baseSrcPath;
     }
-}
-else{
-    return createDefaultFolder(projectType);
-}
+
 }
 
 
-function createDefaultFolder(projectType: ProjectType): string {
+export function createDefaultFolder(projectType: ProjectType): string {
     switch (projectType) {
         case ProjectType.FRONTEND: return "skaya-frontend-app";
         case ProjectType.BACKEND: return "skaya-backend-app";

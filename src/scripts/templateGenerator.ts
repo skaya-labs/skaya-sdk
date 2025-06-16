@@ -50,7 +50,7 @@ export async function generateFromTemplate(params: {
     let { componentType, projectType, fileName } = params;
     let targetFolder = params.targetFolder || await getDefaultFolder(projectType, componentType);
     
-    // !important= Handle API component type separately
+    // !important = Handle API component type separately
 
     if (componentType === FrontendComponentType.API) {
         return handleApiComponentType(projectType, targetFolder, fileName);
@@ -61,6 +61,8 @@ export async function generateFromTemplate(params: {
         throw new Error(`Template directory not found for ${projectType}/${componentType}. ✅ Initialize using skaya init.`);
     }
 
+    // todo: and existing import to getTemplateFilesFor Type
+    
     let templateFiles = await getTemplateFilesForType(componentType, fileName, templateDir);
        const answers = await inquirer.prompt([
         {
@@ -109,6 +111,7 @@ async function generateWithAI(params: {
     componentsToImport?: { name: string, data: string }[];
 }): Promise<TemplateFileInfo[]> {
     const { fileName, projectType, componentType, templateFiles } = params;
+    const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
     
     const answers = await inquirer.prompt([
         {
@@ -131,7 +134,7 @@ async function generateWithAI(params: {
     };
 
     const aiResult = await generateCodeWithAI(
-        fileName,
+        pascalCaseName,
         projectType,
         componentType,
         aiDescription,
@@ -145,10 +148,7 @@ async function generateWithAI(params: {
 
     return aiResult.map(file => ({
         ...file,
-        targetFileName: file.targetFileName.replace(
-            new RegExp(fileName, 'gi'),
-            (match) => match.charAt(0).toUpperCase() + match.slice(1).toLowerCase()
-        )
+        targetFileName: pascalCaseName
     }));
 }
 
@@ -169,27 +169,26 @@ async function saveTemplateFiles(params: {
 }): Promise<string[]> {
     const { templateFiles, fileName, targetFolder, componentType } = params;
     const createdFiles: string[] = [];
-    const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
 
     for (const templateFile of templateFiles) {
         let content = templateFile.content;
         if (!content) continue; // Skip if no content provided
 
         // Handle the special Storybook 'component: Component' case
-        content = content.replace(/component: Component/g, `component: ${pascalCaseName}`);
+        content = content.replace(/component: Component/g, `component: ${fileName}`);
 
         // Do general replacements
         content = content
             .replace(/{{component}}/g, fileName.toLowerCase())
-            .replace(/{{Component}}/g, pascalCaseName)
+            .replace(/{{Component}}/g, fileName)
             .replace(/{{COMPONENT}}/g, fileName.toUpperCase())
             .replace(
                 new RegExp(`(?<!React\\.)(\\b|_)${componentType}(?![:])(\\b|_)`, 'gi'),
-                (match) => pascalCaseName
+                (match) => fileName
             );
 
         // Determine target file name based on component type
-        let targetFileName = pascalCaseName;
+        let targetFileName = fileName;
         if (componentType === FrontendComponentType.PAGE) {
             targetFileName = `${targetFileName}Page`;
         }
@@ -201,8 +200,6 @@ async function saveTemplateFiles(params: {
 
     return createdFiles;
 }
-
-
 
 const readFile = promisify(fs.readFile);
 

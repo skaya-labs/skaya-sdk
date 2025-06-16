@@ -13,7 +13,7 @@ import inquirer from "inquirer";
 import { saveProjectConfig } from "../bin/utils/configLogger";
 import { generateFromTemplate } from "./scripts/templateGenerator";
 import TemplateService from "./services/TemplateService";
-import { getDefaultFolder, scanExistingComponents } from "../bin/utils/ProjectScanner";
+import { createDefaultFolder, getDefaultFolder, scanExistingComponents } from "../bin/utils/ProjectScanner";
 
 /**
  * Creates a new project scaffold
@@ -32,7 +32,7 @@ export async function createProject(projectType: ProjectType): Promise<void> {
             type: "input",
             name: "folder",
             message: `Enter ${projectType} project folder name:`,
-            default: await getDefaultFolder(projectType), // default folder name
+            default: await createDefaultFolder(projectType), // default folder name
         },
     ]);
 
@@ -47,7 +47,7 @@ export async function createProject(projectType: ProjectType): Promise<void> {
     // Create basic project structure based on type
     const { templateType, customRepo } = await TemplateService.promptTemplateSelection(projectType);
     await TemplateService.cloneTemplate(templateType, customRepo, targetPath, projectType);
-    await saveProjectConfig(projectType.toLowerCase() as 'frontend' | 'backend', folder, templateType);
+    await saveProjectConfig(projectType, folder, templateType);
 
     console.log(`✅ ${projectType} project initialized in ${folder}`);
 }
@@ -58,7 +58,6 @@ export async function createProject(projectType: ProjectType): Promise<void> {
  * @param {ICreateComponentParams} params - Component creation parameters
  */
 export async function createFile(params: ICreateComponentParams): Promise<void> {
-
 
     const { componentType, projectType, fileName } = params;
     if (projectType === ProjectType.BACKEND || projectType === ProjectType.SMART_CONTRACT) {

@@ -149,10 +149,6 @@ program
         }
         componentType = type as ComponentType;
         
-        // Validate required fields in non-interactive mode
-        if (!fileName) {
-          throw new Error('Filename is required in non-interactive mode. Use -f or --filename option.');
-        }
       }
       if (!fileName) {
         throw new Error('Filename is required to save the AI_generated component')
