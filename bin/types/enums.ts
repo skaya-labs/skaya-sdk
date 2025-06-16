@@ -43,8 +43,6 @@ export enum SmartContractComponentType {
   SCRIPT = "script"
 }
 
-
-
 /**
  * All possible component types
  */

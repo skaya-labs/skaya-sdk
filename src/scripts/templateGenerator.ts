@@ -148,7 +148,6 @@ async function generateWithAI(params: {
 
     return aiResult.map(file => ({
         ...file,
-        targetFileName: pascalCaseName
     }));
 }
 
