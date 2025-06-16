@@ -59,8 +59,6 @@ export async function createProject(projectType: ProjectType): Promise<void> {
 export async function createFile(params: ICreateComponentParams): Promise<void> {
 
     const { componentType, projectType, fileName } = params;
-
-
     const answers = await inquirer.prompt([
         {
             type: "input",
@@ -79,7 +77,7 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
     const filePaths = await generateFromTemplate({
         componentType,
         projectType,
-        fileName: fileName,
+        fileName,
         targetFolder,
     });
 

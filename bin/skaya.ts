@@ -158,6 +158,8 @@ program
       if (!fileName) {
         throw new Error('Filename is required to save the AI_generated component')
       }
+      fileName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
+
       const params: ICreateComponentParams = {
         componentType,
         projectType,

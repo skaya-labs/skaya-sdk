@@ -75,7 +75,7 @@ export async function generateFromTemplate(params: {
         }
     ]);
     if(answers.useAI) {
-              const importResult = await handleComponentImport(projectType, componentType);
+        const importResult = await handleComponentImport(projectType, componentType);
         const importExisting = importResult.importExisting;
         const componentsToImport = importResult.componentsToImport;
 
@@ -139,7 +139,6 @@ async function generateWithAI(params: {
     componentsToImport?: { name: string, data: string }[];
 }): Promise<TemplateFileInfo[]> {
     const { fileName, projectType, componentType, templateFiles } = params;
-    const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
     
     const answers = await inquirer.prompt([
         {
@@ -162,7 +161,7 @@ async function generateWithAI(params: {
     };
 
     const aiResult = await generateCodeWithAI(
-        pascalCaseName,
+        fileName,
         projectType,
         componentType,
         aiDescription,
@@ -173,6 +172,7 @@ async function generateWithAI(params: {
             componentsToImport: params.componentsToImport || []
         }
     );
+console.log(aiResult);
 
     return aiResult.map(file => ({
         ...file,
