@@ -3,7 +3,7 @@ import inquirer from "inquirer";
 import { scanExistingComponents } from "../../../../bin/utils/ProjectScanner";
 
 export async function handleFrontendComponentImport(componentType: FrontendComponentType) {
-    const existingComponents = await scanExistingComponents(ProjectType.FRONTEND, componentType);
+    const existingComponents = await scanExistingComponents(ProjectType.FRONTEND, FrontendComponentType.COMPONENT);
     let importExisting = false;
     let componentsToImport: { name: string, data: string }[] = [];
 

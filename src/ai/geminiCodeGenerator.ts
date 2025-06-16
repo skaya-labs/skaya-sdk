@@ -139,10 +139,9 @@ Component Description: ${baseConfig.aiDescription}
 Component Type: ${baseConfig.componentType}
 Target File Name: ${targetFileName}
 
-Component Content:
-${componentContent}
-Component To Import:
-${componentsToImport}
+
+Component Content to test:
+${componentContent} 
 
 
 Key Requirements:
@@ -169,18 +168,17 @@ ${componentContent}:
 Component Description: ${baseConfig.aiDescription}
 Component Type: ${baseConfig.componentType}
 Target File Name: ${targetFileName}
-Component To Import:
-${componentsToImport}
 Key Requirements:
 1. Import the component from '${targetFileName}'
-3. Create a default story with all controls and props from ${componentContent}
-4. Add relevant stories that showcase different states
-5. Include proper JSDoc documentation
-6. Use TypeScript types for all args
+2. Create a default story with all controls and props from ${componentContent}
+3. Add relevant stories that showcase different states
+4. Include proper JSDoc documentation
+5. Use TypeScript types for all args
 
 Return ONLY the story file content with no additional explanations.`
         };
     } else if (fileType === 'tsx') {
+         const baseFileName = targetFileName.replace(/\.tsx$/, '');
         return {
             systemPrompt: `${baseSystemPrompt}
 - For React components only
@@ -194,20 +192,17 @@ Return ONLY the story file content with no additional explanations.`
 Component Name: ${targetFileName}
 Description: ${baseConfig.aiDescription}. Add Proper styling with className for multiple screen size.
 Component Type: ${baseConfig.componentType}
-Style Type: Provide css className with  ${targetFileName}.css . later I will add css file
+Style Type: Provide css className with  ${baseFileName}.css . later I will add css file
 Target File Name: ${targetFileName}
-Component To Import:
-${componentsToImport}
 Import componentToImport as "@/components/${targetFileName}/${targetFileName}"
-
 Key Requirements:
 1. Use TypeScript with proper typing
 2. Follow React best practices
 3. Include all necessary props
 4. Implement the described functionality: ${baseConfig.aiDescription}
-6. Provide css className later I will add css file. make sure to import ${targetFileName}.css
-
-Return ONLY the component code with no additional explanations.`
+5. Provide css className later I will add css file. Do not mix css with main tsx file. make sure to import ${baseFileName}.css
+Return ONLY the component code with no additional explanations. 
+`
         };
     } else if (fileType === 'css' || fileType === 'scss') {
         return {
