@@ -32,6 +32,19 @@ export enum BackendComponentType {
   CONTROLLER = "controller",
 }
 
+
+/**
+ * Smart Contract component type enumeration
+ */
+export enum SmartContractComponentType {
+  CONTRACT = "contract",
+  LIBRARY = "library",
+  INTERFACE = "interface",
+  SCRIPT = "script"
+}
+
+
+
 /**
  * All possible component types
  */

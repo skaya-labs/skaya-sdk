@@ -8,7 +8,7 @@
 
 import { Command } from "commander";
 import { createProject, createFile } from "../src/action";
-import { ProjectType, ComponentType, FrontendComponentType, BackendComponentType } from "./types/enums";
+import { ProjectType, ComponentType, FrontendComponentType, BackendComponentType, SmartContractComponentType } from "./types/enums";
 import { ICommandOptions, ICreateComponentParams } from "./types/interfaces";
 import { isValidProjectType, isValidFrontendComponent, isValidBackendComponent } from "./utils/validator";
 import { promptComponentType } from "./utils/prompt";
@@ -57,7 +57,7 @@ program
           `Invalid project type "${type}". Use '${ProjectType.FRONTEND}' or '${ProjectType.BACKEND}'.`
         );
       }
-  
+
       await createProject(type as ProjectType);
       console.log(`✅ Successfully created ${type} project`);
     } catch (error) {
@@ -93,9 +93,14 @@ program
             name: 'componentType',
             message: 'Select component type:',
             choices: (answers) => {
-              return answers.projectType === ProjectType.FRONTEND
-                ? Object.values(FrontendComponentType)
-                : Object.values(BackendComponentType);
+              if (answers.projectType === ProjectType.FRONTEND) {
+                return Object.values(FrontendComponentType);
+              } else if (answers.projectType === ProjectType.BACKEND) {
+                return Object.values(BackendComponentType);
+              } else if (answers.projectType === ProjectType.SMART_CONTRACT) {
+                return Object.values(SmartContractComponentType);
+              }
+              return [];
             }
           },
           {
@@ -106,11 +111,11 @@ program
             validate: (input) => !!input || 'Filename is required'
           }
         ]);
-        
+
         projectType = answers.projectType;
         componentType = answers.componentType;
         fileName = fileName || answers.fileName;
-       } 
+      }
       // Partial interactive (project type specified)
       else if (!type && options.project) {
         projectType = options.project.toLowerCase() as ProjectType;
@@ -119,7 +124,7 @@ program
         }
 
         componentType = await promptComponentType(projectType);
-        
+
         // Prompt for additional info if not provided
         const additionalAnswers = await inquirer.prompt([
           {
@@ -130,13 +135,13 @@ program
             validate: (input) => !!input || 'Filename is required'
           },
         ]);
-        
+
         fileName = fileName || additionalAnswers.fileName;
-       }
+      }
       // Non-interactive mode
       else {
         projectType = options.project?.toLowerCase() as ProjectType || ProjectType.FRONTEND;
-        
+
         if (!isValidProjectType(projectType)) {
           throw new Error(`Invalid project type. Use '${ProjectType.FRONTEND}' or '${ProjectType.BACKEND}'.`);
         }
@@ -148,7 +153,7 @@ program
           throw new Error(`Invalid backend component type '${Object.values(BackendComponentType).join("' or '")}'.`);
         }
         componentType = type as ComponentType;
-        
+
       }
       if (!fileName) {
         throw new Error('Filename is required to save the AI_generated component')
@@ -157,7 +162,7 @@ program
         componentType,
         projectType,
         fileName,
-       };
+      };
 
       await createFile(params);
       // Log the component creation
