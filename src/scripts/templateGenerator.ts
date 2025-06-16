@@ -7,12 +7,15 @@
 
 import fs from "fs-extra";
 import path from "path";
-import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from "../../bin/types/enums";
+import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType, SmartContractComponentType } from "../../bin/types/enums";
 import { generateCodeWithAI } from "../ai/geminiCodeGenerator";
 import inquirer from "inquirer";
 import { promisify } from "util";
 import { getDefaultFolder } from "../../bin/utils/ProjectScanner";
 import { handleApiComponentType } from "./FolderCreator/FrontendFileCreator/Api";
+import { handleFrontendComponentImport } from "./FolderCreator/FrontendFileCreator";
+import { handleBackendComponentImport } from "./FolderCreator/BackendFileCreator";
+import { handleSmartContractComponentImport } from "./FolderCreator/ContractFileCreator";
 
 export interface ComponentGenerationOptions {
     style: 'css' | 'scss' | 'styled-components' | 'none';
@@ -44,12 +47,11 @@ export async function generateFromTemplate(params: {
     projectType: ProjectType;
     fileName: string;
     targetFolder?: string;
-    importExisting?: boolean;
-    componentsToImport?: { name: string, data: string }[]
 }): Promise<string[]> {
     let { componentType, projectType, fileName } = params;
     let targetFolder = params.targetFolder || await getDefaultFolder(projectType, componentType);
     
+
     // !important = Handle API component type separately
 
     if (componentType === FrontendComponentType.API) {
@@ -61,7 +63,7 @@ export async function generateFromTemplate(params: {
         throw new Error(`Template directory not found for ${projectType}/${componentType}. ✅ Initialize using skaya init.`);
     }
 
-    // todo: and existing import to getTemplateFilesFor Type
+    // todo: add existing import to getTemplateFilesFor Type
     
     let templateFiles = await getTemplateFilesForType(componentType, fileName, templateDir);
        const answers = await inquirer.prompt([
@@ -73,13 +75,17 @@ export async function generateFromTemplate(params: {
         }
     ]);
     if(answers.useAI) {
+              const importResult = await handleComponentImport(projectType, componentType);
+        const importExisting = importResult.importExisting;
+        const componentsToImport = importResult.componentsToImport;
+
         templateFiles = await generateWithAI({
             fileName,
             projectType,
             componentType,
             templateFiles,
-            importExisting: params.importExisting,
-            componentsToImport: params.componentsToImport
+            importExisting: importExisting,
+            componentsToImport: componentsToImport
         });
     }
 
@@ -89,6 +95,28 @@ export async function generateFromTemplate(params: {
         targetFolder,
         componentType
     });
+}
+
+/**
+ * Handles importing existing components based on project type
+ * @param {ProjectType} projectType - The project type
+ * @param {ComponentType} componentType - The component type
+ * @returns {Promise<{importExisting: boolean, componentsToImport: {name: string, data: string}[]}>} Import results
+ */
+async function handleComponentImport(
+    projectType: ProjectType,
+    componentType: ComponentType | ApiType
+): Promise<{importExisting: boolean, componentsToImport: {name: string, data: string}[]}> {
+    switch (projectType) {
+        case ProjectType.FRONTEND:
+            return await handleFrontendComponentImport(componentType as FrontendComponentType);
+        case ProjectType.BACKEND:
+            return await handleBackendComponentImport(componentType as BackendComponentType);
+        case ProjectType.SMART_CONTRACT:
+            return await handleSmartContractComponentImport(componentType as SmartContractComponentType);
+        default:
+            return { importExisting: false, componentsToImport: [] };
+    }
 }
 
 /**

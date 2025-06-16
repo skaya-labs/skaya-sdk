@@ -46,6 +46,6 @@ export enum SmartContractComponentType {
 /**
  * All possible component types
  */
-export type ComponentType = FrontendComponentType | BackendComponentType;
+export type ComponentType = FrontendComponentType | BackendComponentType | SmartContractComponentType;
 
 

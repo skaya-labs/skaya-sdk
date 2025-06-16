@@ -21,11 +21,6 @@ import { createDefaultFolder, getDefaultFolder, scanExistingComponents } from ".
  */
 export async function createProject(projectType: ProjectType): Promise<void> {
 
-    if (projectType === ProjectType.BACKEND || projectType === ProjectType.SMART_CONTRACT) {
-        console.log(`⚠️  ${projectType} component creation is coming soon!`);
-        return;
-    }
-
     // Prompt for project folder name
     const { folder } = await inquirer.prompt([
         {
@@ -36,6 +31,10 @@ export async function createProject(projectType: ProjectType): Promise<void> {
         },
     ]);
 
+    if (projectType === ProjectType.BACKEND || projectType === ProjectType.SMART_CONTRACT) {
+        console.log(`⚠️  ${projectType} component creation is coming soon!`);
+        return;
+    }
     const targetPath = path.join(process.cwd(), folder); // !important: Using process.cwd() to ensure correct path resolution only while creating project
 
     if (await fs.pathExists(targetPath)) {
@@ -60,55 +59,21 @@ export async function createProject(projectType: ProjectType): Promise<void> {
 export async function createFile(params: ICreateComponentParams): Promise<void> {
 
     const { componentType, projectType, fileName } = params;
-    if (projectType === ProjectType.BACKEND || projectType === ProjectType.SMART_CONTRACT) {
-        console.log(`⚠️  ${projectType} component creation is coming soon!`);
-        return;
-    }
+
 
     const answers = await inquirer.prompt([
         {
             type: "input",
             name: "folder",
-            message: `Enter the folder where you want to create the ${componentType}:`,
+            message: `Enter the folder where you want to create the ${componentType} for ${fileName}:`,
             default: await getDefaultFolder(projectType, componentType),
         }
     ]);
-    // Scan for existing components
-    const existingComponents = await scanExistingComponents(projectType, componentType);
-    let importExisting = false;
-    let componentsToImport: { name: string, data: string }[] = [];
-
-    if (existingComponents && existingComponents.length > 0 && projectType === ProjectType.FRONTEND && componentType !== FrontendComponentType.API) {
-        const { shouldImport } = await inquirer.prompt([
-            {
-                type: 'confirm',
-                name: 'shouldImport',
-                message: `Would you like to import existing ${componentType} components?`,
-                default: false
-            }
-        ]);
-
-        if (shouldImport) {
-            const { selectedComponents } = await inquirer.prompt([
-                {
-                    type: 'checkbox',
-                    name: 'selectedComponents',
-                    message: `Use spacebar to select one or more ${componentType} components:`,
-                    choices: existingComponents.map((component: any) => ({
-                        name: component.name, // Keep original casing
-                        value: component.name  // Keep original casing
-                    })),
-                    pageSize: 10
-                }
-            ]);
-
-            componentsToImport = selectedComponents;
-            importExisting = componentsToImport.length > 0;
-
-            console.log(`\n🧩 Selected components: ${componentsToImport.join(', ')}`);
-        }
+    if (projectType === ProjectType.BACKEND || projectType === ProjectType.SMART_CONTRACT) {
+        console.log(`⚠️  ${projectType} component creation is coming soon!`);
+        return;
     }
-
+ 
     const targetFolder = answers.folder;
 
     const filePaths = await generateFromTemplate({
@@ -116,15 +81,10 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
         projectType,
         fileName: fileName,
         targetFolder,
-        importExisting,
-        componentsToImport,
     });
 
     for (const filePath of filePaths) {
         console.log(`✅ ${componentType} file created at ${filePath}`);
     }
-
-    if (importExisting) {
-        console.log(`♻️  Imported existing ${componentType} components: ${componentsToImport.join(', ')}`);
-    }
+ 
 }

@@ -1,7 +1,7 @@
 import path from "path";
 import { readConfig } from "./configLogger";
 import { promises as fs } from 'fs';
-import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from '../types/enums';
+import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType, SmartContractComponentType } from '../types/enums';
 import { getBaseTemplateFiles } from "../../src/scripts/templateGenerator";
 
 
@@ -10,7 +10,7 @@ import { getBaseTemplateFiles } from "../../src/scripts/templateGenerator";
  */
 export async function scanExistingComponents(
     projectType: ProjectType,
-    componentType: FrontendComponentType | BackendComponentType
+    componentType: FrontendComponentType | BackendComponentType | SmartContractComponentType
 ): Promise<Array<{ name: string, data: string }>> {
     try {
         const componentsPath = `${process.cwd()}/${await getDefaultFolder(projectType, componentType)}`;
