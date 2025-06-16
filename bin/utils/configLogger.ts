@@ -4,9 +4,16 @@ import { promises as fs } from 'fs';
 const CONFIG_FILE = 'config.json';
 const LOG_FILE = 'component_creation.log';
 
+interface ProjectConfig {
+  name: string;
+  template: string;
+  [key: string]: any;
+}
+
 interface Config {
-  frontend?: string;
-  backend?: string;
+  frontend?: ProjectConfig;
+  backend?: ProjectConfig;
+  smartContract?: ProjectConfig;
   [key: string]: any;
 }
 
@@ -15,7 +22,7 @@ interface Config {
  * @param type - Project type (frontend or backend)
  * @param name - Name of the project
  */
-export async function saveProjectConfig(type: 'frontend' | 'backend', name: string): Promise<void> {
+export async function saveProjectConfig(type: 'frontend' | 'backend', name: string, template?: string): Promise<void> {
   try {
     let config: Config = {};
     
@@ -28,7 +35,11 @@ export async function saveProjectConfig(type: 'frontend' | 'backend', name: stri
     }
     
     // Update the config
-    config[type] = name;
+    config[type] = {
+      name,
+      template: template || 'custom',
+      createdAt: new Date().toISOString()
+    };
     
     // Write the updated config
     await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2));

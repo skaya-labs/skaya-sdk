@@ -180,7 +180,7 @@ class TemplateService {
     
     // Add all files and make initial commit
     execSync('git add .', { stdio: 'inherit' });
-    execSync('git commit -m "Initial commit"', { stdio: 'inherit' });
+    execSync('git commit -m "skaya init"', { stdio: 'inherit' });
     
     console.log(`✅ Successfully initialized project with ${this.formatTemplateName(templateType)} template`);
   }

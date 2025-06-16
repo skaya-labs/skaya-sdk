@@ -39,7 +39,7 @@ export async function generateFromTemplate(params: {
     componentType: ComponentType | ApiType;
     projectType: ProjectType;
     fileName: string;
-    targetFolder: string;
+    targetFolder?: string;
     importExisting?: boolean;
     componentsToImport?: {name: string, data: string}[]
     componentTypeConfig: {
@@ -48,7 +48,9 @@ export async function generateFromTemplate(params: {
     }
 
 }): Promise<string[]> {
-    let { componentType, projectType, fileName, targetFolder, componentTypeConfig } = params;
+      let targetFolder = params.targetFolder || `skaya${params.projectType}`;
+    
+    let { componentType, projectType, fileName, componentTypeConfig } = params;
     // Handle API component type separately
     const pascalCaseName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
     const createdFiles: string[] = [];
@@ -58,7 +60,7 @@ export async function generateFromTemplate(params: {
         // Check if Redux store files already exist
         const config = await readConfig();
         if (config?.frontend) {
-            const reduxStorePath = path.join(process.cwd(), config.frontend, 'src', `APIs`, componentTypeConfig.apiType);
+            const reduxStorePath = path.join(process.cwd(), config.frontend.name, 'src', `APIs`, componentTypeConfig.apiType);
             const storeFilePath = path.join(reduxStorePath, 'store.tsx');
             const storeProviderPath = path.join(reduxStorePath, 'storeProvider.tsx');
 
@@ -293,50 +295,3 @@ function getBaseTemplateFiles(componentType: ComponentType | ApiType): string[] 
     }
 }
 
-/**
- * Gets the default folder for a component type
- * @param {ProjectType} projectType - The project type (frontend/backend)
- * @param {ComponentType} componentType - The component type
- * @returns {Promise<string>} The default folder path
- */
-export async function getDefaultFolder(
-    projectType: ProjectType,
-    componentType: FrontendComponentType | BackendComponentType
-): Promise<string> {
-    const config = await readConfig();
-
-    // Check if config exists for the provided projectType
-    if (!config) {
-        throw new Error("Configuration not found.");
-    }
-
-    if (projectType === ProjectType.FRONTEND && !config.frontend) {
-        console.error("Frontend project type specified, but no 'frontend' config found. ✅ Initialize a frontend project with skaya init.");
-    }
-
-    if (projectType === ProjectType.BACKEND && !config.backend) {
-        console.error("Backend project type specified, but no 'backend' config found. ✅ Initialize a frontend project with skaya init.");
-    }
-
-    // Set baseSrcPath based on projectType
-    const baseSrcPath = projectType === ProjectType.FRONTEND
-        ? `${config.frontend}/src`
-        : `${config.backend}/src`;
-
-    // Resolve folder path based on projectType and componentType
-
-    switch (componentType) {
-        case FrontendComponentType.PAGE:
-            return `${baseSrcPath}/pages`;
-        case FrontendComponentType.COMPONENT:
-            return `${baseSrcPath}/components`;
-        case FrontendComponentType.API:
-            return `${baseSrcPath}/APIs`;
-        case BackendComponentType.ROUTE:
-            return `${baseSrcPath}/routes`;
-        case BackendComponentType.CONTROLLER:
-            return `${baseSrcPath}/${BackendComponentType.CONTROLLER}s`;
-        default:
-            return baseSrcPath;
-    }
-}

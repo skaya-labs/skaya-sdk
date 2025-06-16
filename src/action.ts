@@ -11,9 +11,9 @@ import { ApiType, FrontendComponentType, ProjectType } from "../bin/types/enums"
 import { ApiEndpointConfig, ICreateComponentParams } from "../bin/types/interfaces";
 import inquirer from "inquirer";
 import { saveProjectConfig } from "../bin/utils/configLogger";
-import { generateFromTemplate, getDefaultFolder as getTemplateDefaultFolder } from "./scripts/templateGenerator";
+import { generateFromTemplate } from "./scripts/templateGenerator";
 import TemplateService from "./services/TemplateService";
-import { scanExistingComponents } from "../bin/utils/ProjectScanner";
+import { getDefaultFolder, scanExistingComponents } from "../bin/utils/ProjectScanner";
 import { askApiEndpointConfig } from "./services/ApiTemplateService";
 
 /**
@@ -27,18 +27,16 @@ export async function createProject(projectType: ProjectType): Promise<void> {
         return;
     }
 
-    const defaultFolder = getDefaultFolder(projectType);
     // Prompt for project folder name
     const { folder } = await inquirer.prompt([
         {
             type: "input",
             name: "folder",
             message: `Enter ${projectType} project folder name:`,
-            default: defaultFolder,
+            default: await getDefaultFolder(projectType), // default folder name
         },
     ]);
 
-    await saveProjectConfig(projectType.toLowerCase() as 'frontend' | 'backend', folder);
 
     const targetPath = path.join(process.cwd(), folder);
 
@@ -51,17 +49,9 @@ export async function createProject(projectType: ProjectType): Promise<void> {
     // Create basic project structure based on type
     const { templateType, customRepo } = await TemplateService.promptTemplateSelection(projectType);
     await TemplateService.cloneTemplate(templateType, customRepo, targetPath,projectType);
+    await saveProjectConfig(projectType.toLowerCase() as 'frontend' | 'backend', folder,templateType);
+
     console.log(`✅ ${projectType} project initialized in ${folder}`);
-}
-
-
-function getDefaultFolder(projectType: ProjectType): string {
-    switch (projectType) {
-        case ProjectType.FRONTEND: return "frontend-app";
-        case ProjectType.BACKEND: return "backend-app";
-        case ProjectType.SMART_CONTRACT: return "smart-contract";
-        default: return "my-project";
-    }
 }
 
 
@@ -99,10 +89,10 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
         }
     }
 
-    const defaultFolder = await getTemplateDefaultFolder(projectType, componentType);
+    const defaultFolder = await getDefaultFolder(projectType, componentType);
 
     // Scan for existing components
-    const existingComponents = await scanExistingComponents(componentType);
+    const existingComponents = await scanExistingComponents(projectType, componentType);
     let importExisting = false;
     let componentsToImport:{name: string, data: string}[] = [];
 
