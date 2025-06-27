@@ -1,15 +1,29 @@
-import path from "path";
+import path, { join } from "path";
 import { readConfig } from "./configLogger";
-import { promises as fs } from 'fs';
+import { promises as fs, readFileSync } from 'fs';
 import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType, SmartContractComponentType } from '../types/enums';
 import TemplateService from "../../src/services/TemplateService";
+
+interface DependencyConfig {
+  question: string;
+  message: string;
+}
+export interface ComponentImportConfig {
+  [key: string]: {
+    importQuestion: string;
+    selectMessage: string;
+    scanType: ProjectType;
+    dependencies?: Record<string, DependencyConfig>;
+    requiredImports?: string[];
+  };
+}
 
 /**
  * Scans existing components in the frontend project
  */
 export async function scanExistingComponents(
     projectType: ProjectType,
-    componentType: FrontendComponentType | BackendComponentType | SmartContractComponentType
+    componentType: ComponentType | ApiType
 ): Promise<Array<{ name: string, data: string }>> {
     try {
         const componentsPath = `${process.cwd()}/${await getDefaultFolder(projectType, componentType)}`;
@@ -85,6 +99,17 @@ export async function scanExistingComponents(
 }
 
 
+
+export function createDefaultFolder(projectType: ProjectType): string {
+    switch (projectType) {
+        case ProjectType.FRONTEND: return "skaya-frontend-app";
+        case ProjectType.BACKEND: return "skaya-backend-app";
+        case ProjectType.SMART_CONTRACT: return "skaya-smart-contract";
+        default: return "skaya-project";
+    }
+}
+
+
 /**
  * Gets the default folder for a component type
  * @param {ProjectType} projectType - The project type (frontend/backend)
@@ -151,11 +176,30 @@ export async function getDefaultFolder(
 }
 
 
-export function createDefaultFolder(projectType: ProjectType): string {
-    switch (projectType) {
-        case ProjectType.FRONTEND: return "skaya-frontend-app";
-        case ProjectType.BACKEND: return "skaya-backend-app";
-        case ProjectType.SMART_CONTRACT: return "skaya-smart-contract";
-        default: return "skaya-project";
-    }
+/**
+ * Gets the template directory path for a given project and component type
+ * @param projectType The project type (frontend/backend)
+ * @param componentType The component type
+ * @returns The full path to the template directory
+ */
+export function getDefaultTemplateDirectory(projectType: ProjectType, componentType: ComponentType | ApiType): string {
+  return path.join(
+    __dirname,
+    "..",
+    "templates",
+    projectType.toLowerCase(),
+    componentType
+  );
 }
+
+// Add this to componentUtils.ts
+export const loadComponentConfig = (): ComponentImportConfig => {
+  try {
+    const configPath = join(__dirname, "componentImportConfig.json");
+    const configFile = readFileSync(configPath, "utf-8");
+    return JSON.parse(configFile);
+  } catch (error) {
+    console.error("Error loading component import configuration:", error);
+    return {};
+  }
+};

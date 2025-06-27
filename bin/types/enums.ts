@@ -30,6 +30,8 @@ export enum ApiType {
 export enum BackendComponentType {
   ROUTE = "route",
   CONTROLLER = "controller",
+  MIDDLEWARE = "middleware",
+  SCRIPT = "script"
 }
 
 

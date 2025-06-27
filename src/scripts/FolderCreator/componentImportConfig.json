@@ -1,0 +1,42 @@
+{
+  "frontend.component": {
+    "importQuestion": "Would you like to import existing component components?",
+    "selectMessage": "Use spacebar to select one or more component components:",
+    "scanType": "frontend",
+    "requiredImports": ["component", "api"]
+  },
+  "frontend.page": {
+    "importQuestion": "Would you like to import existing page components?",
+    "selectMessage": "Use spacebar to select one or more page components:",
+    "scanType": "frontend",
+    "dependencies": {
+      "component": {
+        "question": "Would you like to import components used by this page?",
+        "message": "Select components to import:"
+      },
+      "api": {
+        "question": "Would you like to import APIs used by this page?",
+        "message": "Select APIs to import:"
+      }
+    },
+    "requiredImports": ["component", "api"]
+  },
+  "frontend.api": {
+    "importQuestion": "Would you like to import existing API components?",
+    "selectMessage": "Use spacebar to select one or more API components:",
+    "scanType": "frontend",
+    "requiredImports": ["api"]
+  },
+  "backend.route": {
+    "importQuestion": "Would you like to import existing route components?",
+    "selectMessage": "Use spacebar to select one or more route components:",
+    "scanType": "backend",
+    "requiredImports": ["middleware", "controller", "script"]
+  },
+  "backend.controller": {
+    "importQuestion": "Would you like to import existing controller components?",
+    "selectMessage": "Use spacebar to select one or more controller components:",
+    "scanType": "backend",
+    "requiredImports": ["script"]
+  }
+}
