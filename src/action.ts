@@ -7,7 +7,7 @@
 
 import fs from "fs-extra";
 import path from "path";
-import {  FrontendComponentType, ProjectType } from "../bin/types/enums";
+import { ProjectType } from "../bin/types/enums";
 import { ICreateComponentParams } from "../bin/types/interfaces";
 import inquirer from "inquirer";
 import { saveProjectConfig } from "../bin/utils/configLogger";
@@ -30,6 +30,8 @@ export async function createProject(projectType: ProjectType): Promise<void> {
             default: await createDefaultFolder(projectType), // default folder name
         },
     ]);
+
+    // todo: Add for backend and smart contract components
 
     if (projectType === ProjectType.BACKEND || projectType === ProjectType.SMART_CONTRACT) {
         console.log(`⚠️  ${projectType} component creation is coming soon!`);
@@ -67,6 +69,8 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
             default: await getDefaultFolder(projectType, componentType),
         }
     ]);
+
+    // todo: Add for backend and smart contract components
     if (projectType === ProjectType.BACKEND || projectType === ProjectType.SMART_CONTRACT) {
         console.log(`⚠️  ${projectType} component creation is coming soon!`);
         return;
