@@ -5,9 +5,9 @@ import { ApiType } from '../../../../bin/types/enums';
 import path from 'path';
 import fs from "fs-extra";
 import { readConfig } from '../../../../bin/utils/configLogger';
-import { getBaseTemplateFiles } from '../../../scripts/templateGenerator';
 import { askApiEndpointConfig } from '../../../../bin/utils/prompt';
 import { ApiEndpointConfig } from '../../../../bin/types/interfaces';
+import TemplateService from '../../../services/TemplateService';
 
 /**
  * Handles API component type by updating the base API endpoints file
@@ -68,7 +68,7 @@ export async function handleApiComponentType(
                 await fs.ensureDir(reduxStorePath);
 
                 // Get base template files for Redux store initialization
-                const baseFiles = getBaseTemplateFiles(ApiType.REDUX);
+                const baseFiles = TemplateService.getBaseTemplateFiles(ApiType.REDUX);
 
                 for (const file of baseFiles) {
                     const sourcePath = path.join(templateDirReduc, file);

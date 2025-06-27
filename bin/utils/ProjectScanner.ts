@@ -2,8 +2,7 @@ import path from "path";
 import { readConfig } from "./configLogger";
 import { promises as fs } from 'fs';
 import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType, SmartContractComponentType } from '../types/enums';
-import { getBaseTemplateFiles } from "../../src/scripts/templateGenerator";
-
+import TemplateService from "../../src/services/TemplateService";
 
 /**
  * Scans existing components in the frontend project
@@ -41,8 +40,8 @@ export async function scanExistingComponents(
                 }
 
                 // More flexible main file detection
-                   const possibleMainFiles = getBaseTemplateFiles(componentType)
-                    .map(file => file.replace(new RegExp(componentType, 'gi'), dir))
+                   const possibleMainFiles = TemplateService.getBaseTemplateFiles(componentType)
+                    .map((file: string) => file.replace(new RegExp(componentType, 'gi'), dir))
                     .concat([ // Add common fallbacks
                         `${dir}.tsx`, 
                         `${dir}.jsx`,
@@ -51,7 +50,7 @@ export async function scanExistingComponents(
                     ]);
 
 
-                const mainFile = possibleMainFiles.find(file =>
+                const mainFile = possibleMainFiles.find((file: string) =>
                     componentFiles.includes(file) ||
                     componentFiles.includes(path.basename(file))
                 );

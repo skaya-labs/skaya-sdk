@@ -291,7 +291,7 @@ class TemplateService {
     return result;
   }
 
-  private getBaseTemplateFiles(componentType: ComponentType | ApiType): string[] {
+  public getBaseTemplateFiles(componentType: ComponentType | ApiType): string[] {
     switch (componentType) {
       case FrontendComponentType.COMPONENT:
         return [
