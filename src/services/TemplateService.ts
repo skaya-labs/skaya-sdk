@@ -3,7 +3,9 @@ import { execSync } from 'child_process';
 import fs from 'fs-extra';
 import path from 'path';
 import inquirer from 'inquirer';
-import { ProjectType } from '../../bin/types/enums';
+import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from '../../bin/types/enums';
+import { TemplateFileInfo } from '../scripts/templateGenerator';
+import { promisify } from 'util';
 
 class TemplateService {
   private templatesConfig: any;
@@ -198,6 +200,130 @@ class TemplateService {
       .split('-')
       .map(word => word.toUpperCase())
       .join(' ');
+  }
+
+  /**
+   * Saves template files to disk
+   * @param {Object} params - Saving parameters
+   * @param {TemplateFileInfo[]} params.templateFiles - Template files to save
+   * @param {string} params.fileName - The base name for the component
+   * @param {string} params.targetFolder - The target folder path
+   * @param {ComponentType} params.componentType - The type of component
+   * @returns {Promise<string[]>} Array of created file paths
+   */
+  public async saveTemplateFiles(params: {
+    templateFiles: TemplateFileInfo[];
+    fileName: string;
+    targetFolder: string;
+    componentType: ComponentType | ApiType;
+  }): Promise<string[]> {
+    const { templateFiles, fileName, targetFolder, componentType } = params;
+    const createdFiles: string[] = [];
+
+    for (const templateFile of templateFiles) {
+      let content = templateFile.content;
+      if (!content) continue; // Skip if no content provided
+
+      // Handle the special Storybook 'component: Component' case
+      content = content.replace(/component: Component/g, `component: ${fileName}`);
+
+      // Do general replacements
+      content = content
+        .replace(/{{component}}/g, fileName.toLowerCase())
+        .replace(/{{Component}}/g, fileName)
+        .replace(/{{COMPONENT}}/g, fileName.toUpperCase())
+        .replace(
+          new RegExp(`(?<!React\\.)(\\b|_)${componentType}(?![:])(\\b|_)`, 'gi'),
+          (match) => fileName
+        );
+
+      // Determine target file name based on component type
+      let targetFileName = fileName;
+      if (componentType === FrontendComponentType.PAGE) {
+        targetFileName = `${targetFileName}Page`;
+      }
+      
+      const targetPath = path.join(process.cwd(), targetFolder, targetFileName, templateFile.targetFileName);
+      await fs.outputFile(targetPath, content);
+      createdFiles.push(targetPath);
+    }
+
+    return createdFiles;
+  }
+
+  /**
+   * Gets template files for a specific component type with their contents
+   * @param {ComponentType} componentType - The type of component
+   * @param {string} fileName - The name of the file to use for replacements
+   * @param {string} templateDir - The directory where templates are located
+   * @returns {Promise<TemplateFileInfo[]>} Array of template file information with contents
+   */
+  public async getTemplateFilesForType(
+    componentType: ComponentType | ApiType,
+    fileName: string,
+    templateDir: string
+  ): Promise<TemplateFileInfo[]> {
+    const baseFiles = this.getBaseTemplateFiles(componentType);
+    const result: TemplateFileInfo[] = [];
+    const formattedFileName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
+
+    for (const file of baseFiles) {
+      const targetFileName = file.replace(new RegExp(componentType, 'gi'), formattedFileName);
+      const filePath = path.join(templateDir, file);
+
+      try {
+        const content = await promisify(fs.readFile)(filePath, 'utf-8');
+        result.push({
+          originalFileName: file,
+          targetFileName,
+          content
+        });
+      } catch (error) {
+        console.error(`Error reading template file ${filePath}:`, error);
+        result.push({
+          originalFileName: file,
+          targetFileName,
+          content: '' // Fallback empty content if file can't be read
+        });
+      }
+    }
+
+    return result;
+  }
+
+  private getBaseTemplateFiles(componentType: ComponentType | ApiType): string[] {
+    switch (componentType) {
+      case FrontendComponentType.COMPONENT:
+        return [
+          `${FrontendComponentType.COMPONENT}.tsx`,
+          `${FrontendComponentType.COMPONENT}.stories.tsx`,
+          `${FrontendComponentType.COMPONENT}.test.tsx`,
+          `${FrontendComponentType.COMPONENT}.css`
+        ];
+      case FrontendComponentType.PAGE:
+        return [
+          `${FrontendComponentType.PAGE}.tsx`,
+          `${FrontendComponentType.PAGE}.test.tsx`,
+          `${FrontendComponentType.PAGE}.css`
+        ];
+      case FrontendComponentType.API:
+        return [`${FrontendComponentType.API}Slice.tsx`];
+      case ApiType.REDUX:
+        return [`${ApiType.REDUX}.tsx`, 'store.tsx', 'storeProvider.tsx'];
+      case BackendComponentType.ROUTE:
+        return [
+          `${BackendComponentType.ROUTE}.ts`,
+          `${BackendComponentType.ROUTE}.test.ts`
+        ];
+      case BackendComponentType.CONTROLLER:
+        return [
+          `${BackendComponentType.CONTROLLER}.ts`,
+          `${BackendComponentType.CONTROLLER}.test.ts`
+        ];
+      default:
+        const exhaustiveCheck: any = componentType;
+        throw new Error(`Unhandled component type for getTemplateFilesForType: ${exhaustiveCheck}`);
+    }
   }
 }
 
