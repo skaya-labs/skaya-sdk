@@ -13,7 +13,7 @@ import inquirer from "inquirer";
 import { saveProjectConfig } from "../bin/utils/configLogger";
 import { generateFromTemplate } from "./scripts/templateGenerator";
 import TemplateService from "./services/TemplateService";
-import { createDefaultFolder, getDefaultFolder, scanExistingComponents } from "../bin/utils/ProjectScanner";
+import { createDefaultFolder, getDefaultFolderForComponentType } from "../bin/utils/ProjectScanner";
 
 /**
  * Creates a new project scaffold
@@ -66,7 +66,7 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
             type: "input",
             name: "folder",
             message: `Enter the folder where you want to create the ${componentType} for ${fileName}:`,
-            default: await getDefaultFolder(projectType, componentType),
+            default: await getDefaultFolderForComponentType(projectType, componentType),
         }
     ]);
 

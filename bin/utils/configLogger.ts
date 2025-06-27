@@ -2,10 +2,9 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { ProjectType } from '../types/enums';
-import { getDefaultFolder } from './ProjectScanner';
 
 const CONFIG_FILE = 'skaya.config.json';
-const LOG_FILE = 'component_creation.log';
+const LOG_FILE = 'Skayalogs.log';
 
 interface ProjectConfig {
   name: string;
@@ -47,8 +46,7 @@ export async function saveProjectConfig(projectType: ProjectType, name: string, 
       createdAt: new Date().toISOString()
     };
     
-    // Write the updated config to both locations
-    await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2));
+    // Write the updated config to main Config file
     await fs.writeFile(configPath, JSON.stringify(config, null, 2));
     
     console.log(`✅ Configuration saved to ${CONFIG_FILE} and ${configPath}`);

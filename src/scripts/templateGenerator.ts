@@ -14,7 +14,7 @@ import {
 } from "../../bin/types/enums";
 import { generateCodeWithAI } from "../ai/geminiCodeGenerator";
 import inquirer from "inquirer";
-import { getDefaultFolder, getDefaultTemplateDirectory } from "../../bin/utils/ProjectScanner";
+import { getDefaultFolderForComponentType, getDefaultTemplateDirectory } from "../../bin/utils/ProjectScanner";
 import { handleApiComponentType } from "./FolderCreator/FrontendFileCreator/Api";
 import TemplateService from "../services/TemplateService";
 import { handleComponentImport } from "./FolderCreator/HandleImport";
@@ -52,7 +52,7 @@ export async function generateFromTemplate(params: {
 }): Promise<string[]> {
   let { componentType, projectType, fileName } = params;
   let targetFolder =
-    params.targetFolder || (await getDefaultFolder(projectType, componentType));
+    params.targetFolder || (await getDefaultFolderForComponentType(projectType, componentType));
 
   // !important = Handle API component type separately
 
@@ -109,7 +109,6 @@ export async function generateFromTemplate(params: {
   });
 }
 
-
 /**
  * Generates component files using AI
  * @param {Object} params - Generation parameters
@@ -151,19 +150,32 @@ async function generateWithAI(params: {
     withStories: projectType === ProjectType.FRONTEND,
   };
 
-  const aiResult = await generateCodeWithAI(
-    fileName,
-    projectType,
-    componentType,
-    aiDescription,
-    options,
-    templateFiles,
-    {
-      importExisting: params.importExisting,
-      componentsToImport: params.componentsToImport || [],
+  try {
+    const aiResult = await generateCodeWithAI(
+      fileName,
+      projectType,
+      componentType,
+      aiDescription,
+      options,
+      templateFiles,
+      {
+        importExisting: params.importExisting,
+        componentsToImport: params.componentsToImport || [],
+      }
+    );
+    
+    // Check if any file has empty content (which would indicate generation failed)
+    const hasEmptyContent = aiResult.some(file => !file.content || file.content.trim() === '');
+    if (hasEmptyContent) {
+      console.error('AI generation failed for some files, returning template files');
+      return templateFiles;
     }
-  );
-  return aiResult.map((file) => ({
-    ...file,
-  }));
+    
+    return aiResult.map((file) => ({
+      ...file,
+    }));
+  } catch (error) {
+    console.error('Error generating with AI:', error);
+    return templateFiles; // Return original template files on error
+  }
 }
