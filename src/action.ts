@@ -13,7 +13,7 @@ import inquirer from "inquirer";
 import { saveProjectConfig } from "../bin/utils/configLogger";
 import { generateFromTemplate } from "./scripts/templateGenerator";
 import TemplateService from "./services/TemplateService";
-import { createDefaultFolder, getDefaultFolderForComponentType } from "../bin/utils/ProjectScanner";
+import { getDefaultFolderForComponentType } from "../bin/utils/ProjectScanner";
 
 /**
  * Creates a new project scaffold
@@ -27,7 +27,7 @@ export async function createProject(projectType: ProjectType): Promise<void> {
             type: "input",
             name: "folder",
             message: `Enter ${projectType} project folder name:`,
-            default: await createDefaultFolder(projectType), // default folder name
+            default: `${projectType}SkayaProject` // default folder name
         },
     ]);
 

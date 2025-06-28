@@ -15,9 +15,11 @@ class TemplateService {
   }
 
   private loadTemplatesConfig() {
-    const configPath = path.join(__dirname, '../templates/githubTemplates.json');
+    const configPath = path.join(__dirname, '../../bin/templates/githubTemplates.json');
     if (!fs.existsSync(configPath)) {
-      throw new Error('Template configuration file not found');
+      console.log(configPath);
+      
+      throw new Error('Template configuration file not found at ' );
     }
     this.templatesConfig = require(configPath);
   }

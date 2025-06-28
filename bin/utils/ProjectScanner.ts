@@ -119,19 +119,6 @@ export async function scanExistingComponents(
   }
 }
 
-export function createDefaultFolder(projectType: ProjectType): string {
-  switch (projectType) {
-    case ProjectType.FRONTEND:
-      return "skaya-frontend-app";
-    case ProjectType.BACKEND:
-      return "skaya-backend-app";
-    case ProjectType.BLOCKCHAIN:
-      return "skaya-smart-contract";
-    default:
-      return "skaya-project";
-  }
-}
-
 /**
  * Gets the default folder for a component type
  * @param {ProjectType} projectType - The project type (frontend/backend)
@@ -162,30 +149,16 @@ export async function getDefaultFolderForComponentType(
     };
 
     if (!configMap[projectType]) {
-      const defaultName = createDefaultFolder(projectType);
-      console.warn(`${projectType} config not found. Setting default.`);
+      console.warn(`${projectType} config not found. Setting default or add your folder.`);
 
       // Update both the config map and the original config
-      configMap[projectType] = { name: defaultName, template: "" };
-
-      // Persist the updated config back to the original object
-      switch (projectType) {
-        case ProjectType.FRONTEND:
-          config.frontend = configMap[projectType];
-          break;
-        case ProjectType.BACKEND:
-          config.backend = configMap[projectType];
-          break;
-        case ProjectType.BLOCKCHAIN:
-          config.smartContract = configMap[projectType];
-          break;
-      }
+      configMap[projectType] = { name: `${projectType}SkayaProject`, template: "" };
     }
 
     // Get base source path
     const projectConfig = configMap[projectType];
     const baseSrcPath = `${
-      projectConfig?.name || createDefaultFolder(projectType)
+      projectConfig?.name || `${projectType}SkayaProject`
     }/src`;
 
     // Handle component-specific paths
