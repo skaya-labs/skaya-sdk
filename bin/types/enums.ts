@@ -4,7 +4,7 @@
 export enum ProjectType {
   FRONTEND = "frontend",
   BACKEND = "backend",
-  SMART_CONTRACT = "smart-contract"
+  BLOCKCHAIN= "blockchain",
 }
 
 /**
@@ -38,16 +38,18 @@ export enum BackendComponentType {
 /**
  * Smart Contract component type enumeration
  */
-export enum SmartContractComponentType {
+export enum BlokchainComponentType {
   CONTRACT = "contract",
   LIBRARY = "library",
   INTERFACE = "interface",
-  SCRIPT = "script"
+  SCRIPT = "script",
+  SMART_CONTRACT = "smart-contract"
+
 }
 
 /**
  * All possible component types
  */
-export type ComponentType = FrontendComponentType | BackendComponentType | SmartContractComponentType;
+export type ComponentType = FrontendComponentType | BackendComponentType | BlokchainComponentType;
 
 

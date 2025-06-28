@@ -33,7 +33,7 @@ export async function createProject(projectType: ProjectType): Promise<void> {
 
     // todo: Add for backend and smart contract components
 
-    if (projectType === ProjectType.BACKEND || projectType === ProjectType.SMART_CONTRACT) {
+    if (projectType === ProjectType.BACKEND || projectType === ProjectType.BLOCKCHAIN) {
         console.log(`⚠️  ${projectType} component creation is coming soon!`);
         return;
     }
@@ -71,7 +71,7 @@ export async function createFile(params: ICreateComponentParams): Promise<void> 
     ]);
 
     // todo: Add for backend and smart contract components
-    if (projectType === ProjectType.BACKEND || projectType === ProjectType.SMART_CONTRACT) {
+    if (projectType === ProjectType.BACKEND || projectType === ProjectType.BLOCKCHAIN) {
         console.log(`⚠️  ${projectType} component creation is coming soon!`);
         return;
     }

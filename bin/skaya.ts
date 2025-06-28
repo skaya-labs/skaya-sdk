@@ -8,7 +8,7 @@
 
 import { Command } from "commander";
 import { createProject, createFile } from "../src/action";
-import { ProjectType, ComponentType, FrontendComponentType, BackendComponentType, SmartContractComponentType } from "./types/enums";
+import { ProjectType, ComponentType, FrontendComponentType, BackendComponentType, BlokchainComponentType } from "./types/enums";
 import { ICommandOptions, ICreateComponentParams } from "./types/interfaces";
 import { isValidProjectType, isValidFrontendComponent, isValidBackendComponent } from "./utils/validator";
 import { promptComponentType } from "./utils/prompt";
@@ -45,7 +45,7 @@ program
             choices: [
               { name: 'Frontend', value: ProjectType.FRONTEND },
               { name: 'Backend', value: ProjectType.BACKEND },
-              { name: 'Smart Contract', value: ProjectType.SMART_CONTRACT }
+              { name: 'Smart Contract', value: ProjectType.BLOCKCHAIN }
             ],
           }
         ]);
@@ -70,7 +70,7 @@ program
   .command("create [type]")
   .allowUnknownOption()
   .description("Create a new component (interactive mode if no type specified)")
-  .option(`-p, --project <type>", "Project type (${ProjectType.FRONTEND} or ${ProjectType.BACKEND})`)
+  .option(`-p, --project <type>", "Project type (${ProjectType.FRONTEND} or ${ProjectType.BACKEND}) or ${ProjectType.BLOCKCHAIN}`)
   .option("-f, --filename <name>", "Filename for the component")
   .option("-a, --ai <boolean>", "Use AI to generate the component", false)
   .option("-d, --description <text>", "Description of the component")
@@ -97,8 +97,8 @@ program
                 return Object.values(FrontendComponentType);
               } else if (answers.projectType === ProjectType.BACKEND) {
                 return Object.values(BackendComponentType);
-              } else if (answers.projectType === ProjectType.SMART_CONTRACT) {
-                return Object.values(SmartContractComponentType);
+              } else if (answers.projectType === ProjectType.BLOCKCHAIN) {
+                return Object.values(BlokchainComponentType);
               }
               return [];
             }

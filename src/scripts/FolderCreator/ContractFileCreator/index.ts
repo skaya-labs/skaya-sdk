@@ -1,10 +1,10 @@
 // scripts/componentImporters/SmartContractComponentImporter.ts
-import { ProjectType, SmartContractComponentType } from "../../../../bin/types/enums";
+import { ProjectType, BlokchainComponentType } from "../../../../bin/types/enums";
 import inquirer from "inquirer";
 import { scanExistingComponents } from "../../../../bin/utils/ProjectScanner";
 
-export async function handleSmartContractComponentImport(componentType: SmartContractComponentType) {
-    const existingComponents = await scanExistingComponents(ProjectType.SMART_CONTRACT, componentType);
+export async function handleSmartContractComponentImport(componentType: BlokchainComponentType) {
+    const existingComponents = await scanExistingComponents(ProjectType.BLOCKCHAIN, componentType);
     let importExisting = false;
     let componentsToImport: { name: string, data: string }[] = [];
 

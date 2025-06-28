@@ -7,7 +7,7 @@ import {
   ComponentType,
   FrontendComponentType,
   ProjectType,
-  SmartContractComponentType,
+  BlokchainComponentType,
 } from "../types/enums";
 import TemplateService from "../../src/services/TemplateService";
 
@@ -125,7 +125,7 @@ export function createDefaultFolder(projectType: ProjectType): string {
       return "skaya-frontend-app";
     case ProjectType.BACKEND:
       return "skaya-backend-app";
-    case ProjectType.SMART_CONTRACT:
+    case ProjectType.BLOCKCHAIN:
       return "skaya-smart-contract";
     default:
       return "skaya-project";
@@ -158,7 +158,7 @@ export async function getDefaultFolderForComponentType(
     const configMap = {
       [ProjectType.FRONTEND]: config.frontend,
       [ProjectType.BACKEND]: config.backend,
-      [ProjectType.SMART_CONTRACT]: config.smartContract,
+      [ProjectType.BLOCKCHAIN]: config.smartContract,
     };
 
     if (!configMap[projectType]) {
@@ -176,7 +176,7 @@ export async function getDefaultFolderForComponentType(
         case ProjectType.BACKEND:
           config.backend = configMap[projectType];
           break;
-        case ProjectType.SMART_CONTRACT:
+        case ProjectType.BLOCKCHAIN:
           config.smartContract = configMap[projectType];
           break;
       }
