@@ -69,7 +69,6 @@ export async function saveProjectConfig(projectType: ProjectType, name: string, 
 
     await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 
-    console.log(`✅ Project configuration saved to ${CONFIG_FILE} at ${configPath}`);
   } catch (error) {
     throw error;
   }
@@ -132,7 +131,6 @@ export async function saveProjectComponentConfig(
     // Write the updated config back to the main Config file
     await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 
-    console.log(`✅ Component '${componentName}' configuration for '${projectType}' saved to ${CONFIG_FILE}`);
   } catch (error) {
     console.error(`❌ Failed to save component '${componentName}' configuration for '${projectType}':`, error);
     throw error;
@@ -160,7 +158,6 @@ export async function logComponentCreation(params: {
 
     // Append to log file (creates it if doesn't exist)
     await fs.appendFile(LOG_FILE, logLine);
-    console.log(`📝 Logged component creation to ${LOG_FILE}`);
   } catch (error) {
     console.error('❌ Failed to log component creation:', error);
     throw error;

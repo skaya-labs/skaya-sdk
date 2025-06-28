@@ -22,7 +22,7 @@ export const fetchApiData = createAsyncThunk(
   async (params: { id: string }, { rejectWithValue }) => {
     try {
       const response = await Request({
-        endpointId: 'api', // Must match your ApiEndpoint key
+        endpointId: 'API', // Must match your ApiEndpoint key
         slug: params.id, // Appends to the URL (e.g., `/api/data/${id}`)
       });
       return response;
@@ -37,7 +37,7 @@ export const createApiData = createAsyncThunk(
   async (payload: any, { rejectWithValue }) => {
     try {
       const response = await Request({
-        endpointId: 'api', // Must match your ApiEndpoint key
+        endpointId: 'API', // Must match your ApiEndpoint key
         data: payload,
       });
       return response;
@@ -48,7 +48,7 @@ export const createApiData = createAsyncThunk(
 );
 
 const apiSlice = createSlice({
-  name: 'api',
+  name: 'apiState',
   initialState,
   reducers: {
     resetApiState: () => initialState,

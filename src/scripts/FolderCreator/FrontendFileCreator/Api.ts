@@ -59,14 +59,9 @@ export async function handleApiComponentType(
       componentType
     );
     const reduxStorePath = path.join(process.cwd(), defaultReducerFolder);
-
-    console.log(reduxStorePath);
-
-    const targetFolder = `${path.join(process.cwd(), reduxStorePath)}`;
-    console.log("Target folder for Redux store:", targetFolder);
-    const storeFilePath = `${path.join(reduxStorePath, "store.tsx")}`;
-    const storeProviderPath = path.join(reduxStorePath, "storeProvider.tsx");
-
+    const storeFilePath = `${path.join(reduxStorePath,"redux", "store.tsx")}`;
+    
+    const storeProviderPath = path.join(reduxStorePath,"redux", "storeProvider.tsx");
     try {
       // Check if store files exist
       const storeExists = await fs.pathExists(storeFilePath);
@@ -75,7 +70,6 @@ export async function handleApiComponentType(
         projectType,
         componentType
       );
-      console.log(templateDirReduc);
 
       if (!storeExists || !providerExists) {
         console.log("store doesn't exist creating one");
@@ -126,21 +120,18 @@ export async function handleApiComponentType(
     const baseFiles = TemplateService.getBaseTemplateFiles(
       FrontendComponentType.API
     );
-    console.log(baseFiles, "baseFiles");
 
     // --- Start of new logic to handle base files ---
     const targetDir = path.join(process.cwd(), targetFolder);
     await fs.ensureDir(targetDir);
 
-    const newBaseFiles = ["apiSlice.tsx", "backendRequest.ts"];
     const newFileNameSlice = `${fileName}Slice.tsx`;
-    const backendRequestPath = path.join(targetDir, "backendRequest.ts");
     const apiSliceTemplatePath = path.join(
       getDefaultTemplateDirectory(projectType, componentType),
       "apiSlice.tsx"
     );
 
-    for (const file of newBaseFiles) {
+    for (const file of baseFiles) {
       let content = "";
 
       if (file === "apiSlice.tsx") {
@@ -175,7 +166,6 @@ export async function handleApiComponentType(
 
           await fs.outputFile(targetSlicePath, content);
           createdFiles.push(targetSlicePath);
-          console.log(`Created and updated: ${targetSlicePath}`);
         } else {
           console.warn(`Template file not found: ${apiSliceTemplatePath}`);
         }
@@ -191,17 +181,13 @@ export async function handleApiComponentType(
             content = await fs.readFile(sourceBackendRequestPath, "utf-8");
             await fs.outputFile(targetBackendRequestPath, content);
             createdFiles.push(targetBackendRequestPath);
-            console.log(`Pasted: ${targetBackendRequestPath}`);
+            console.log(`Backend API Call added: ${targetBackendRequestPath}`);
           } else {
             console.warn(
               `Template file not found: ${sourceBackendRequestPath}`
             );
           }
-        } else {
-          console.log(
-            `File already exists, skipping: ${targetBackendRequestPath}`
-          );
-        }
+        } 
       }
     }
     // --- End of new logic ---
@@ -242,7 +228,6 @@ export async function handleApiComponentType(
     await fs.outputFile(apiFilePath, fileContent);
     createdFiles.push(apiFilePath);
 
-    console.log(createdFiles);
     return createdFiles;
   } catch (error) {
     throw new Error(`Failed to update API endpoints file: ${error}`);
