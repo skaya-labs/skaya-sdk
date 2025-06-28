@@ -19,7 +19,7 @@ const initialState: ApiState = {
 // Create async thunks using the Request utility
 export const fetchApiData = createAsyncThunk(
   'api/fetchData',
-  async (params: { id: string }, { rejectWithValue }) => {
+  async (params: { id: string }, { rejectWithValue }:{rejectWithValue:any}) => {
     try {
       const response = await Request({
         endpointId: 'API', // Must match your ApiEndpoint key
@@ -34,7 +34,7 @@ export const fetchApiData = createAsyncThunk(
 
 export const createApiData = createAsyncThunk(
   'api/createData',
-  async (payload: any, { rejectWithValue }) => {
+  async (payload: any, { rejectWithValue }:{rejectWithValue:any}) => {
     try {
       const response = await Request({
         endpointId: 'API', // Must match your ApiEndpoint key
@@ -60,15 +60,15 @@ const apiSlice = createSlice({
     // Generic matcher for all async thunks
     const addRequestMatchers = (thunk: any) => {
       builder
-        .addCase(thunk.pending, (state) => {
+        .addCase(thunk.pending, (state:any) => {
           state.loading = 'pending';
           state.error = null;
         })
-        .addCase(thunk.fulfilled, (state, action) => {
+        .addCase(thunk.fulfilled, (state:any, action:any) => {
           state.loading = 'succeeded';
           state.data = action.payload;
         })
-        .addCase(thunk.rejected, (state, action) => {
+        .addCase(thunk.rejected, (state: any, action:any) => {
           state.loading = 'failed';
           state.error = action.payload as string || 'Request failed';
         });

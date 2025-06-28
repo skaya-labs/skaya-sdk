@@ -12,5 +12,5 @@
     "allowJs": true     // This allows JavaScript/JSX files to be included
   },
   "include": ["src/**/*", "bin/**/*","package.json"],
-  "exclude": ["node_modules","bin/templates"]
+  "exclude": ["node_modules","bin/templates/*"]
 }
