@@ -309,9 +309,9 @@ class TemplateService {
           `${FrontendComponentType.PAGE}.css`
         ];
       case FrontendComponentType.API:
-        return [`${FrontendComponentType.API}Slice.tsx`];
+        return [`${FrontendComponentType.API}Slice.tsx`,"backendRequest.ts"];
       case ApiType.REDUX:
-        return [`${ApiType.REDUX}.tsx`, 'store.tsx', 'storeProvider.tsx'];
+        return [ 'redux/store.tsx', 'redux/storeProvider.tsx'];
       case BackendComponentType.ROUTE:
         return [
           `${BackendComponentType.ROUTE}.ts`,

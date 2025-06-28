@@ -40,7 +40,7 @@ export interface TemplateFileInfo {
  * Generates component files from templates or AI
  * @param {Object} params - Generation parameters
  * @param {ComponentType} params.componentType - The type of component to generate
- * @param {ProjectType} params.projectType - The project type (frontend/backend)
+ * @param {ProjectType} params.projectType - The project type (frontend/backend/blockchain)
  * @param {string} params.fileName - The base name for the component
  * @param {string} params.targetFolder - The target folder path
  * @returns {Promise<string[]>} Array of created file paths
@@ -58,7 +58,7 @@ export async function generateFromTemplate(params: {
   // !important = Handle API component type separately
   if (componentType === FrontendComponentType.API) {
     // API component generation is handled in a separate function, so we'll log and save config after it completes
-    const createdFiles = await handleApiComponentType(projectType, targetFolder, fileName);
+    const createdFiles = await handleApiComponentType(projectType,componentType, targetFolder, fileName);
     // Log component creation
     for (const file of createdFiles) {
         await logComponentCreation({
