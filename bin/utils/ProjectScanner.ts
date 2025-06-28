@@ -11,7 +11,7 @@ import {
 } from "../types/enums";
 import TemplateService from "../../src/services/TemplateService";
 
-interface DependencyConfig {
+export interface DependencyConfig {
   question: string;
   message: string;
 }
@@ -199,6 +199,7 @@ export async function getDefaultFolderForComponentType(
       [FrontendComponentType.API]: `${FrontendComponentType.API}s`,
       [BackendComponentType.ROUTE]: `${BackendComponentType.ROUTE}s`,
       [BackendComponentType.CONTROLLER]: `${BackendComponentType.CONTROLLER}s`,
+      [BlokchainComponentType.CONTRACT]: `${BlokchainComponentType.CONTRACT}s`,
     };
 
     const componentPath = componentTypeMap[componentType];

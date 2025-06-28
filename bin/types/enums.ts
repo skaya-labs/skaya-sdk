@@ -43,7 +43,6 @@ export enum BlokchainComponentType {
   LIBRARY = "library",
   INTERFACE = "interface",
   SCRIPT = "script",
-  SMART_CONTRACT = "smart-contract"
 
 }
 
