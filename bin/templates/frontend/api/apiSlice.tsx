@@ -1,6 +1,6 @@
 // @src/APIs/redux/api/apiSlice.ts
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-import Request from './backendRequest'; // Import the Request utility
+import Request from '../backendRequest'; // Import the Request utility
 
 // Define the shape of your state
 interface ApiState {
