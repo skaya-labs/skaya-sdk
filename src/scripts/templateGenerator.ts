@@ -21,7 +21,7 @@ import { handleComponentImport } from "./FolderCreator/HandleImport";
 import { logComponentCreation, saveProjectComponentConfig } from "../../bin/utils/configLogger";
 
 export interface ComponentGenerationOptions {
-  style: "css" | "scss" | "styled-components" | "none";
+  style: "css" | "scss" | "styled-components" | "none"; // todo add css type to enums
   typescript: boolean;
   withProps?: boolean;
   withState?: boolean;
