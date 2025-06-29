@@ -1,4 +1,3 @@
-// scripts/questions/Api.ts
 
 import inquirer from "inquirer";
 import {
@@ -125,7 +124,9 @@ export async function handleApiComponentType(
     const targetDir = path.join(process.cwd(), targetFolder);
     await fs.ensureDir(targetDir);
 
-    const newFileNameSlice = `${fileName}Slice.tsx`;
+    const apiSliceFolder = path.join(targetDir, fileName); // Create a new folder for the slice
+    const apiSliceIndexPath = path.join(apiSliceFolder, "index.ts"); // The index.ts file inside the new folder
+
     const apiSliceTemplatePath = path.join(
       getDefaultTemplateDirectory(projectType, componentType),
       "apiSlice.tsx"
@@ -135,7 +136,7 @@ export async function handleApiComponentType(
       let content = "";
 
       if (file === "apiSlice.tsx") {
-        const targetSlicePath = path.join(targetDir, newFileNameSlice);
+        await fs.ensureDir(apiSliceFolder); // Ensure the new folder exists
         if (await fs.pathExists(apiSliceTemplatePath)) {
           content = await fs.readFile(apiSliceTemplatePath, "utf-8");
 
@@ -164,8 +165,8 @@ export async function handleApiComponentType(
             }
           );
 
-          await fs.outputFile(targetSlicePath, content);
-          createdFiles.push(targetSlicePath);
+          await fs.outputFile(apiSliceIndexPath, content); // Save the file as index.ts in the new folder
+          createdFiles.push(apiSliceIndexPath);
         } else {
           console.warn(`Template file not found: ${apiSliceTemplatePath}`);
         }
@@ -187,7 +188,7 @@ export async function handleApiComponentType(
               `Template file not found: ${sourceBackendRequestPath}`
             );
           }
-        } 
+        }
       }
     }
     // --- End of new logic ---
