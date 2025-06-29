@@ -53,6 +53,12 @@ export async function scanExistingComponents(
       const componentsWithData: Array<{ name: string; data: string }> = [];
 
       for (const dir of componentDirs) {
+        // --- IMPROVED CONDITION HERE ---
+        // If componentType is ApiType, skip the 'redux' folder completely
+        if (dir === "redux") {
+          continue; // Skip to the next directory in the loop
+        }
+
         const componentDirPath = path.join(componentsPath, dir);
         let componentFiles;
 
@@ -73,9 +79,11 @@ export async function scanExistingComponents(
           .concat([
             // Add common fallbacks
             `${dir}.tsx`,
+            `${dir}.ts`,
             `${dir}.jsx`,
             `${dir.charAt(0).toUpperCase() + dir.slice(1)}.tsx`,
             "index.tsx",
+            "index.ts",
           ]);
 
         const mainFile = possibleMainFiles.find(
@@ -109,7 +117,7 @@ export async function scanExistingComponents(
       return componentsWithData;
     } catch (error) {
       console.error(
-        `❌ Failed to read components directory: ${componentsPath}. Unable to send extra components to ai.`
+        `❌ Failed to read components directory for ${componentType}. Unable to send extra components to ai.`
       );
       return [];
     }
