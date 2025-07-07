@@ -26,7 +26,7 @@ export interface ComponentImportConfig {
 }
 
 /**
- * Scans existing components in the frontend project
+ * Scans existing components in the  project
  */
 export async function scanExistingComponents(
   projectType: ProjectType,
@@ -82,6 +82,10 @@ export async function scanExistingComponents(
             `${dir}.ts`,
             `${dir}.jsx`,
             `${dir.charAt(0).toUpperCase() + dir.slice(1)}.tsx`,
+            // Handle case where dir ends with "Page" (e.g., "asffsPage" -> "asffs.tsx")
+            ...(dir.toLowerCase().endsWith("page")
+              ? [`${dir.slice(0, -4)}.tsx`]
+              : []),
             "index.tsx",
             "index.ts",
           ]);
