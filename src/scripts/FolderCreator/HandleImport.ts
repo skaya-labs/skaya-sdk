@@ -12,8 +12,11 @@ export async function handleComponentImport(
   componentType: ComponentType | ApiType
 ): Promise<{
   importExisting: boolean;
-  componentsToImport: { name: string; data: string }[];
-  dependencies: Record<string, { name: string; data: string }[]>;
+  // Updated the type definition for componentsToImport to include fileLocation and componentType.
+  // Note: As per the existing logic, this array is intended to remain empty.
+  // The actual selected components with their details are stored in the 'dependencies' object.
+  componentsToImport: { name: string; data: string; fileLocation: string; componentType: ComponentType }[];
+  dependencies: Record<string, { name: string; data: string; fileLocation: string; componentType: ComponentType }[]>;
   requiredImports: string[];
 }> {
   const configKey = `${projectType}.${componentType}`;
@@ -24,26 +27,32 @@ export async function handleComponentImport(
     requiredImports: [],
   };
 
-  const dependencies: Record<string, { name: string; data: string }[]> = {};
+  // Updated the type definition for the values in the dependencies record.
+  const dependencies: Record<string, { name: string; data: string; fileLocation: string; componentType: ComponentType }[]> = {};
   let importExisting = false;
-  const componentsToImport: { name: string; data: string }[] = []; // This will remain empty as per new logic
-  const requiredImports = config.requiredImports || []; // Step 1: Prompt user to select which required imports they want to import
+  // This array will remain empty as per the new logic, but its type is updated for consistency.
+  const componentsToImport: { name: string; data: string; fileLocation: string; componentType: ComponentType }[] = [];
+  const requiredImports = config.requiredImports || [];
 
   if (requiredImports.length > 0) {
     const { selectedRequiredImports } = await inquirer.prompt([
       {
-        type: "checkbox", // Changed from "confirm" to "checkbox"
-        name: "selectedRequiredImports", // Changed name for clarity
-        message: `Select which required components you would like to import:`, // Updated message
-        choices: requiredImports.map((comp) => ({ name: comp, value: comp })), // Create choices from the array
+        type: "checkbox",
+        name: "selectedRequiredImports",
+        message: `Select which required components you would like to import:`,
+        choices: requiredImports.map((comp) => ({ name: comp, value: comp })),
       },
-    ]); // Step 2: For each selected required import type, scan for existing components and let the user choose
+    ]);
 
     for (const depType of selectedRequiredImports) {
+      // It's assumed that `scanExistingComponents` returns objects that include
+      // `name`, `data`, `fileLocation`, and `componentType`.
+      // The `component: any` type assertion is used here, but ideally,
+      // `scanExistingComponents` should return a well-defined type.
       const existingComponentsForType = await scanExistingComponents(
         config.scanType,
         depType as ComponentType
-      );
+      ) as { name: string; data: string; fileLocation: string; componentType: ComponentType }[]; // Explicitly cast for clarity
 
       if (existingComponentsForType?.length > 0) {
         const { selectedDependencies } = await inquirer.prompt([
@@ -51,20 +60,21 @@ export async function handleComponentImport(
             type: "checkbox",
             name: "selectedDependencies",
             message: `Select ${depType} components to import:`,
-            choices: existingComponentsForType.map((component: any) => ({
+            choices: existingComponentsForType.map((component) => ({
               name: component.name,
-              value: component,
+              value: component, // The entire component object (including fileLocation and componentType) is passed here
             })),
             pageSize: 10,
           },
         ]);
+        // Assign the selected dependencies, which now include fileLocation and componentType
         dependencies[depType] = selectedDependencies;
         if (selectedDependencies.length > 0) {
           importExisting = true;
         }
       }
     }
-  } // Final confirmation and summary
+  }
 
   if (Object.keys(dependencies).some((key) => dependencies[key].length > 0)) {
     console.log("\n--- Dependencies to be imported ---");
@@ -81,8 +91,8 @@ export async function handleComponentImport(
 
   return {
     importExisting,
-    componentsToImport,
-    dependencies,
+    componentsToImport, // This will still be an empty array as per the existing logic.
+    dependencies, // This object now contains the selected components with fileLocation and componentType.
     requiredImports,
   };
 }

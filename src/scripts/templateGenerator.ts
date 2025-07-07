@@ -14,11 +14,17 @@ import {
 } from "../../bin/types/enums";
 import { generateCodeWithAI } from "../ai/geminiCodeGenerator";
 import inquirer from "inquirer";
-import { getDefaultFolderForComponentType, getDefaultTemplateDirectory } from "../../bin/utils/ProjectScanner";
+import {
+  getDefaultFolderForComponentType,
+  getDefaultTemplateDirectory,
+} from "../../bin/utils/ProjectScanner";
 import { handleApiComponentType } from "./FolderCreator/FrontendFileCreator/Api";
 import TemplateService from "../services/TemplateService";
 import { handleComponentImport } from "./FolderCreator/HandleImport";
-import { logComponentCreation, saveProjectComponentConfig } from "../../bin/utils/configLogger";
+import {
+  logComponentCreation,
+  saveProjectComponentConfig,
+} from "../../bin/utils/configLogger";
 
 export interface ComponentGenerationOptions {
   style: "css" | "scss" | "styled-components" | "none"; // todo add css type to enums
@@ -50,34 +56,39 @@ export async function generateFromTemplate(params: {
   projectType: ProjectType;
   fileName: string;
   targetFolder?: string;
-}): Promise<string[]> {
+  updateExisting?: boolean;
+}): Promise<{
+  createdFiles: string[];
+  aiDescription?: string;
+  templateFiles: TemplateFileInfo[];
+  imports?: { name: string; data: string }[];
+}> {
   let { componentType, projectType, fileName } = params;
   let targetFolder =
-    params.targetFolder || (await getDefaultFolderForComponentType(projectType, componentType));
+    params.targetFolder ||
+    (await getDefaultFolderForComponentType(projectType, componentType));
 
-  // !important = Handle API component type separately
+  // Handle API component type separately
   if (componentType === FrontendComponentType.API) {
-    // API component generation is handled in a separate function, so we'll log and save config after it completes
-    const createdFiles = await handleApiComponentType(projectType,componentType, targetFolder, fileName);
-    // Log component creation
+    const createdFiles = await handleApiComponentType(
+      projectType,
+      componentType,
+      targetFolder,
+      fileName
+    );
     for (const file of createdFiles) {
-        await logComponentCreation({
-            componentType:componentType,
-            projectType: projectType,
-            fileName: file,
-            description: `Generated API component using template.`
-        });
+      await logComponentCreation({
+        componentType: componentType,
+        projectType: projectType,
+        fileName: file,
+        description: `Generated API component using template.`,
+      });
     }
-    // Save component configuration
-    await saveProjectComponentConfig(projectType, componentType, fileName, {
-        source: 'template',
-        files: createdFiles,
-    });
-    return createdFiles;
+    return { createdFiles, templateFiles: [] };
   }
 
   const templateDir = getDefaultTemplateDirectory(projectType, componentType);
-  
+
   if (!(await fs.pathExists(templateDir))) {
     throw new Error(
       `Template directory not found for ${projectType}/${componentType}. ✅ Initialize using skaya init.`
@@ -100,7 +111,8 @@ export async function generateFromTemplate(params: {
   ]);
 
   let createdFiles: string[] = [];
-  let aiDescription = ''; // Declare aiDescription here
+  let aiDescription: string | undefined = undefined;
+  let imports: { name: string; data: string }[] | undefined = undefined;
 
   if (answers.useAI) {
     const importResult = await handleComponentImport(
@@ -108,69 +120,54 @@ export async function generateFromTemplate(params: {
       componentType
     );
     const importExisting = importResult.importExisting;
-    const componentsToImport = importResult.componentsToImport;
+    imports = Object.values(importResult.dependencies).flat();
 
-    // Call generateWithAI, which will now return the user's prompt as well
     const aiGenerationResult = await generateWithAI({
       fileName,
       projectType,
       componentType,
       templateFiles,
       importExisting: importExisting,
-      componentsToImport: componentsToImport,
+      componentsToImport: imports,
     });
-    
-    // Unpack the prompt and the files from the result
+
     templateFiles = aiGenerationResult.files;
     aiDescription = aiGenerationResult.description;
 
     createdFiles = await TemplateService.saveTemplateFiles({
-        templateFiles, // Use AI-generated files (or original templates on error)
-        fileName,
-        targetFolder,
-        componentType,
+      templateFiles,
+      fileName,
+      targetFolder,
+      componentType,
     });
-    
-    // Log and save config for AI-generated components
+
     for (const file of createdFiles) {
-        await logComponentCreation({
-            componentType: componentType as ComponentType,
-            projectType: projectType,
-            fileName: file,
-            description: `Generated component using AI.`
-        });
+      await logComponentCreation({
+        componentType: componentType as ComponentType,
+        projectType: projectType,
+        fileName: file,
+        description: `Generated component using AI.`,
+      });
     }
-    await saveProjectComponentConfig(projectType, componentType as ComponentType, fileName, {
-        source: 'ai-generated',
-        files: createdFiles,
-        aiPrompt: aiDescription, // Save the AI prompt here!
+  } else {
+    createdFiles = await TemplateService.saveTemplateFiles({
+      templateFiles,
+      fileName,
+      targetFolder,
+      componentType,
     });
 
-  } else {
-      // If AI is not used, save the template files directly
-      createdFiles = await TemplateService.saveTemplateFiles({
-          templateFiles,
-          fileName,
-          targetFolder,
-          componentType,
+    for (const file of createdFiles) {
+      await logComponentCreation({
+        componentType: componentType as ComponentType,
+        projectType: projectType,
+        fileName: file,
+        description: `Generated component from template.`,
       });
-
-      // Log and save config for template-generated components
-      for (const file of createdFiles) {
-          await logComponentCreation({
-              componentType: componentType as ComponentType,
-              projectType: projectType,
-              fileName: file,
-              description: `Generated component from template.`
-          });
-      }
-      await saveProjectComponentConfig(projectType, componentType as ComponentType, fileName, {
-          source: 'template',
-          files: createdFiles,
-      });
+    }
   }
 
-  return createdFiles;
+  return { createdFiles, aiDescription, templateFiles, imports };
 }
 
 /**
@@ -191,7 +188,7 @@ async function generateWithAI(params: {
   templateFiles: TemplateFileInfo[];
   importExisting?: boolean;
   componentsToImport?: { name: string; data: string }[];
-}): Promise<{ files: TemplateFileInfo[], description: string }> {
+}): Promise<{ files: TemplateFileInfo[]; description: string }> {
   const { fileName, projectType, componentType, templateFiles } = params;
 
   const answers = await inquirer.prompt([
@@ -227,20 +224,24 @@ async function generateWithAI(params: {
         componentsToImport: params.componentsToImport || [],
       }
     );
-    
+
     // Check if any file has empty content (which would indicate generation failed)
-    const hasEmptyContent = aiResult.some(file => !file.content || file.content.trim() === '');
+    const hasEmptyContent = aiResult.some(
+      (file) => !file.content || file.content.trim() === ""
+    );
     if (hasEmptyContent) {
-      console.error('AI generation failed for some files, returning template files');
+      console.error(
+        "AI generation failed for some files, returning template files"
+      );
       return { files: templateFiles, description: aiDescription }; // Return original templates and the prompt
     }
-    
+
     return {
       files: aiResult.map((file) => ({ ...file })),
       description: aiDescription, // Return the prompt
     };
   } catch (error) {
-    console.error('Error generating with AI:', error);
+    console.error("Error generating with AI:", error);
     return { files: templateFiles, description: aiDescription }; // Return original template files and the prompt on error
   }
 }

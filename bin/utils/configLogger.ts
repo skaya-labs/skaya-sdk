@@ -2,7 +2,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { ComponentType, ProjectType } from '../types/enums'; // Assuming ComponentType and ProjectType are defined here
-import { ComponentImportConfig } from './ProjectScanner';
+import { ComponentImportConfig } from './ProjectScanner'; // This import seems unused in the original code for ComponentImportConfig interface. Keep if used elsewhere.
 
 const CONFIG_FILE = 'skaya.config.json';
 const LOG_FILE = 'Skayalogs.log';
@@ -15,7 +15,7 @@ interface ProjectConfig {
   name: string;
   template: string;
   createdAt?: string; // Added for consistency with saveProjectConfig
-  components?: Record<string, any>; // Added to store component-specific configurations
+  components?: Record<string, ComponentConfig>; // Explicitly type components as Record<string, ComponentConfig>
   [key: string]: any; // Allow for additional properties
 }
 
@@ -29,7 +29,21 @@ interface Config {
   [key: string]: any; // Allow for additional project types
 }
 
-
+export interface ComponentConfig {
+  source: 'ai' | 'template';
+  files: string[];
+  componentType: ComponentType;
+  savedAt: string;
+  updatedAt?: string; // Added for update timestamp
+  aiPrompt?: string;
+  imports?: Array<{
+    name: string;
+    data: string;
+    componentType?: ComponentType; // componentType can be determined by the system
+  }>;
+  usedBy?: string[]; // Components that import this component
+  // Add other possible config properties here
+}
 
 
 /**
@@ -41,13 +55,15 @@ interface Config {
  */
 export async function saveProjectConfig(projectType: ProjectType, name: string, template?: string): Promise<void> {
   try {
-    const configPath = path.join(process.cwd(), "..", CONFIG_FILE);
+    const configPath = path.join(process.cwd(), CONFIG_FILE); // Corrected path to be in current working directory
     console.log("Saving project config to:", configPath);
 
-    let fileContent = '';
-
+    let config: Config = {};
     try {
-      fileContent = await fs.readFile(configPath, 'utf-8');
+      const fileContent = await fs.readFile(configPath, 'utf-8');
+      if (fileContent.trim().length > 0) {
+        config = JSON.parse(fileContent);
+      }
     } catch (error: any) {
       if (error.code !== 'ENOENT') {
         throw new Error(`Error reading config file: ${error.message}`);
@@ -55,16 +71,15 @@ export async function saveProjectConfig(projectType: ProjectType, name: string, 
       console.log(`Config file ${CONFIG_FILE} not found, creating a new one.`);
     }
 
-    if (fileContent.trim().length > 0) {
-      throw new Error(`❌ A configuration already exists in ${CONFIG_FILE}. Cannot overwrite.`);
+    if (config[projectType]) {
+      console.log(`Project type ${projectType} already exists in config. Updating.`);
     }
 
-    const config: Config = {
-      [projectType]: {
-        name,
-        template: template || "custom",
-        createdAt: new Date().toISOString()
-      }
+    config[projectType] = {
+      name,
+      template: template || "custom",
+      createdAt: new Date().toISOString(),
+      components: config[projectType]?.components || {} // Preserve existing components if updating
     };
 
     await fs.writeFile(configPath, JSON.stringify(config, null, 2));
@@ -77,17 +92,17 @@ export async function saveProjectConfig(projectType: ProjectType, name: string, 
 /**
  * Saves component-specific configuration for a given project type.
  * This allows storing details about components within a project (e.g., 'auth', 'database').
- * The `componentType` is now explicitly saved within the component's configuration.
+ * The configuration now supports tracking component relationships through imports.
  * @param projectType - The ProjectType (e.g., ProjectType.Frontend)
  * @param componentType - The ComponentType (e.g., ComponentType.UI_COMPONENT, ComponentType.API_COMPONENT)
  * @param componentName - The name of the component (e.g., "auth", "paymentGateway")
- * @param componentDetails - The configuration object for the specific component, derived from ComponentImportConfig values.
+ * @param componentDetails - The configuration object for the specific component
  */
 export async function saveProjectComponentConfig(
   projectType: ProjectType,
   componentType: ComponentType,
   componentName: string,
-  componentDetails: any// Type for the specific component's details
+  componentDetails: Partial<Omit<ComponentConfig, 'componentType' | 'savedAt' | 'updatedAt'>> // Partial to allow for updates
 ): Promise<void> {
   try {
     let config: Config = {};
@@ -108,8 +123,10 @@ export async function saveProjectComponentConfig(
     // Ensure the project type entry exists
     if (!config[projectType]) {
       config[projectType] = {
-        name: `${projectType}${DEFAULT_PROJECT_NAME}`, // Use the constant
-        template: "custom"
+        name: `${projectType}${DEFAULT_PROJECT_NAME}`,
+        template: "custom",
+        createdAt: new Date().toISOString(),
+        components: {}
       };
       console.log(`Initialized new entry for project type: ${projectType}`);
     }
@@ -120,22 +137,117 @@ export async function saveProjectComponentConfig(
       console.log(`Initialized 'components' property for project type: ${projectType}`);
     }
 
-    // Assign the component configuration, including the componentType
-    config[projectType]!.components![componentName] = {
-      ...config[projectType]!.components![componentName], // Merge with existing component config if it exists
-      componentType: componentType, // Explicitly save the componentType
-      ...componentDetails, // Apply new component details
-      savedAt: new Date().toISOString() // Add a timestamp for when this component config was saved
+    // Get existing component config to merge
+    const existingComponentConfig: ComponentConfig = config[projectType]!.components![componentName] || {
+      source: 'template', // Default source if new
+      files: [],
+      componentType: componentType, // Set initial componentType
+      savedAt: new Date().toISOString(),
+      imports: [],
+      usedBy: []
     };
 
-    // Write the updated config back to the main Config file
+    // Process imports to add componentType if missing (though it should ideally be provided or inferred during generation)
+    // For now, we'll assume `imports` within `componentDetails` already has `componentType` if needed,
+    // or it will be determined by the system later.
+    const processedImports = componentDetails.imports?.map(imp => ({
+      ...imp,
+      componentType: imp.componentType || undefined // Assuming it might be set or not
+    }));
+
+
+    // Assign the component configuration, merging with existing data
+    config[projectType]!.components![componentName] = {
+      ...existingComponentConfig, // Start with existing configuration
+      ...componentDetails, // Override with new details
+      componentType: componentType, // Ensure componentType is explicitly set or updated
+      ...(processedImports && { imports: processedImports }),
+      savedAt: existingComponentConfig.savedAt || new Date().toISOString(), // Keep original savedAt, update only if not present
+      updatedAt: new Date().toISOString() // Always update updatedAt
+    };
+
+    // Write the updated config back to file
     await fs.writeFile(configPath, JSON.stringify(config, null, 2));
+
+    // Update reverse references if imports changed or component is new
+    if (processedImports?.length || existingComponentConfig.imports?.length) {
+      await updateComponentReferences(
+        projectType,
+        componentName,
+        processedImports || [], // New imports
+        existingComponentConfig.imports || [] // Old imports
+      );
+    }
 
   } catch (error) {
     console.error(`❌ Failed to save component '${componentName}' configuration for '${projectType}':`, error);
     throw error;
   }
 }
+
+/**
+ * Retrieves the configuration for a specific component.
+ * @param projectType - The ProjectType (e.g., ProjectType.Frontend)
+ * @param componentName - The name of the component (e.g., "auth")
+ * @returns The ComponentConfig object or undefined if not found.
+ */
+export async function getProjectComponentConfig(
+  projectType: ProjectType,
+  componentName: string
+): Promise<ComponentConfig | undefined> {
+  try {
+    const config = await readConfig();
+    return config[projectType]?.components?.[componentName];
+  } catch (error) {
+    console.error(`❌ Failed to get configuration for component '${componentName}' in '${projectType}':`, error);
+    return undefined;
+  }
+}
+
+
+// Helper function to update references in imported components
+export async function updateComponentReferences(
+  projectType: ProjectType,
+  sourceComponent: string,
+  newImports: Array<{ name: string, data: string, componentType?: ComponentType }>,
+  oldImports: Array<{ name: string, data: string, componentType?: ComponentType }> = []
+) {
+  const config = await readConfig();
+  const projectComponents = config[projectType]?.components;
+
+  if (!projectComponents) {
+    console.warn(`No components found for project type ${projectType}.`);
+    return;
+  }
+
+  // Remove old references
+  for (const oldImp of oldImports) {
+    if (projectComponents[oldImp.name]) {
+      const importedComp = projectComponents[oldImp.name];
+      if (importedComp.usedBy) {
+        importedComp.usedBy = importedComp.usedBy.filter((comp: string) => comp !== sourceComponent);
+      }
+    }
+  }
+
+  // Add new references
+  for (const newImp of newImports) {
+    if (projectComponents[newImp.name]) {
+      const importedComp = projectComponents[newImp.name];
+      if (!importedComp.usedBy) {
+        importedComp.usedBy = [];
+      }
+      if (!importedComp.usedBy.includes(sourceComponent)) {
+        importedComp.usedBy.push(sourceComponent);
+      }
+    }
+  }
+
+  // Save the updated config
+  const configPath = path.join(process.cwd(), CONFIG_FILE);
+  await fs.writeFile(configPath, JSON.stringify(config, null, 2));
+}
+
 
 /**
  * Logs component creation details to the log file.
@@ -171,11 +283,13 @@ export async function logComponentCreation(params: {
 export async function readConfig(): Promise<Config> {
   try {
     const configPath = path.join(process.cwd(), CONFIG_FILE); // Consistent path with save functions
+
     const data = await fs.readFile(configPath, 'utf-8');
-    
+
     return JSON.parse(data);
   } catch (error: any) {
     if (error.code === 'ENOENT') {
+      // console.log(`Config file ${CONFIG_FILE} not found. Returning empty config.`);
     } else {
       console.error('❌ Failed to read configuration file:', error);
     }
@@ -193,7 +307,7 @@ export async function readConfig(): Promise<Config> {
 export async function readComponentImportConfig(): Promise<ComponentImportConfig> {
   try {
     const configPath = path.join(process.cwd(), CONFIG_FILE); // Consistent path with save functions
-    
+
     const data = await fs.readFile(configPath, 'utf-8');
     const config: Config = JSON.parse(data);
 
@@ -203,6 +317,7 @@ export async function readComponentImportConfig(): Promise<ComponentImportConfig
     return config.componentImports || {};
   } catch (error: any) {
     if (error.code === 'ENOENT') {
+      // console.log(`Component import config file ${CONFIG_FILE} not found. Returning empty config.`);
     } else {
       console.error('❌ Failed to read component import configuration:', error);
     }

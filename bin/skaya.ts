@@ -7,7 +7,7 @@
  */
 
 import { Command } from "commander";
-import { createProject, createFile } from "../src/action";
+import { createProject, createFile, updateFile } from "../src/action";
 import { ProjectType, ComponentType, FrontendComponentType, BackendComponentType, BlokchainComponentType } from "./types/enums";
 import { ICommandOptions, ICreateComponentParams } from "./types/interfaces";
 import { isValidProjectType, isValidFrontendComponent, isValidBackendComponent } from "./utils/validator";
@@ -17,6 +17,7 @@ import inquirer from "inquirer";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { logComponentCreation } from "./utils/configLogger";
+import { scanExistingComponents } from "./utils/ProjectScanner";
 
 // Read package.json to get version
 const packageJsonPath = join(__dirname, '..', 'package.json');
@@ -175,6 +176,83 @@ program
       });
     } catch (error) {
       handleCliError(error as Error, "component creation");
+    }
+  });
+
+  // Update command in your CLI file
+program
+  .command("update [type]")
+  .allowUnknownOption()
+  .description("Update an existing component (interactive mode)")
+  .option(`-p, --project <type>", "Project type (${ProjectType.FRONTEND} or ${ProjectType.BACKEND}) or ${ProjectType.BLOCKCHAIN}`)
+  .option("-a, --ai <boolean>", "Use AI to update the component", false)
+  .option("-d, --description <text>", "New description of the component")
+  .action(async (type: string | undefined, options: ICommandOptions & { ai?: boolean; description?: string }) => {
+    try {
+      let projectType: ProjectType;
+      let componentType: ComponentType;
+      
+      // Interactive mode for project type if not specified
+      if (!options.project) {
+        const projectAnswer = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'projectType',
+            message: 'Select project type:',
+            choices: Object.values(ProjectType)
+          }
+        ]);
+        projectType = projectAnswer.projectType;
+      } else {
+        projectType = options.project.toLowerCase() as ProjectType;
+        if (!isValidProjectType(projectType)) {
+          throw new Error(`Invalid project type. Use '${ProjectType.FRONTEND}' or '${ProjectType.BACKEND}'.`);
+        }
+      }
+
+      // Interactive mode for component type if not specified
+      if (!type) {
+        componentType = await promptComponentType(projectType);
+      } else {
+        if (projectType === ProjectType.FRONTEND && !isValidFrontendComponent(type)) {
+          throw new Error(`Invalid frontend component type. Use '${Object.values(FrontendComponentType).join("' or '")}'.`);
+        }
+        if (projectType === ProjectType.BACKEND && !isValidBackendComponent(type)) {
+          throw new Error(`Invalid backend component type '${Object.values(BackendComponentType).join("' or '")}'.`);
+        }
+        componentType = type as ComponentType;
+      }
+
+      // Scan for existing components
+      const existingComponents = await scanExistingComponents(projectType, componentType);
+      
+      if (existingComponents.length === 0) {
+        throw new Error(`No existing ${componentType} components found to update.`);
+      }
+
+      // Let user select which component to update
+      const { selectedComponent } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'selectedComponent',
+          message: `Select ${componentType} to update:`,
+          choices: existingComponents.map(comp => ({
+            name: comp.name,
+            value: comp.name
+          }))
+        }
+      ]);
+
+      const params: ICreateComponentParams = {
+        componentType,
+        projectType,
+        fileName: selectedComponent,
+      };
+
+      await updateFile(params);
+      console.log(`✅ Successfully updated ${componentType} component: ${selectedComponent}`);
+    } catch (error) {
+      handleCliError(error as Error, "component update");
     }
   });
 
