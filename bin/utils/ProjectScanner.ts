@@ -240,3 +240,48 @@ export const loadComponentConfig = (): ComponentImportConfig => {
     return {};
   }
 };
+
+
+/**
+ * Gets all file names inside a specified folder
+ * @param folderName The name of the folder to scan
+ * @param componentType The type of component (page, component, route, etc.)
+ * @param projectType The type of project (frontend, backend, blockchain)
+ * @returns Promise<string[]> Array of file names in the folder
+ * @throws Error when folder cannot be accessed or read
+ */
+export async function getFilesInFolder(
+  folderName: string,
+  componentType: ComponentType | ApiType,
+  projectType: ProjectType
+): Promise<string[]> {
+  // Get the base path for the component type
+  const basePath = await getDefaultFolderForComponentType(projectType, componentType);
+  const fullPath = path.join(process.cwd(), basePath, folderName);
+
+  try {
+    // Verify the directory exists
+    await fs.access(fullPath);
+  } catch (error) {
+    throw new Error(`Folder "${fullPath}" does not exist or cannot be accessed`);
+  }
+
+  try {
+    // Read all files in the directory
+    const files = await fs.readdir(fullPath);
+
+    // Filter out directories (only return files)
+    const fileNames: string[] = [];
+    for (const file of files) {
+      const filePath = path.join(fullPath, file);
+      const stats = await fs.stat(filePath);
+      if (stats.isFile()) {
+        fileNames.push(file);
+      }
+    }
+
+    return fileNames;
+  } catch (error) {
+    throw new Error(`Failed to read files in folder "${fullPath}": ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
