@@ -52,6 +52,7 @@ export interface TemplateFileInfo {
  * @returns {Promise<string[]>} Array of created file paths
  */
 export async function generateFromTemplate(params: {
+  projectType: ProjectType;
   componentType: ComponentType | ApiType;
   projectType: ProjectType;
   fileName: string;

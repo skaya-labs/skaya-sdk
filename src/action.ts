@@ -99,8 +99,8 @@ export async function createFile(
   const targetFolder = answers.folder;
 
   const { createdFiles, aiDescription, imports } = await generateFromTemplate({
-    componentType,
     projectType,
+    componentType,
     fileName,
     targetFolder,
   });
@@ -148,8 +148,8 @@ export async function updateFile(params: ICreateComponentParams): Promise<void> 
   }
 
   const { createdFiles, aiDescription, imports } = await generateFromTemplate({
-    componentType,
     projectType,
+    componentType,
     fileName,
     targetFolder,
     updateExisting: true
