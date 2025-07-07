@@ -43,6 +43,7 @@ export enum BlokchainComponentType {
   LIBRARY = "library",
   INTERFACE = "interface",
   SCRIPT = "script",
+  ENUM = "enum",
 
 }
 
