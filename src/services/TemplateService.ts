@@ -6,6 +6,7 @@ import inquirer from 'inquirer';
 import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from '../../bin/types/enums';
 import { TemplateFileInfo } from '../scripts/templateGenerator';
 import { promisify } from 'util';
+import { getDefaultTemplateDirectory } from '../../bin/utils/ProjectScanner';
 
 class TemplateService {
   private templatesConfig: any;
@@ -224,8 +225,9 @@ class TemplateService {
 
     for (const templateFile of templateFiles) {
       let content = templateFile.content;
-      if (!content) continue; // Skip if no content provided
-
+      if (!content){
+        throw new Error(`Template file ${templateFile.originalFileName} is empty.`);
+      }
       // Handle the special Storybook 'component: Component' case
       content = content.replace(/component: Component/g, `component: ${fileName}`);
 
@@ -261,10 +263,12 @@ class TemplateService {
    * @returns {Promise<TemplateFileInfo[]>} Array of template file information with contents
    */
   public async getTemplateFilesForType(
-    componentType: ComponentType | ApiType,
     fileName: string,
-    templateDir: string
+    componentType: ComponentType | ApiType,
+    projectType: ProjectType,
   ): Promise<TemplateFileInfo[]> {
+
+    const templateDir=await getDefaultTemplateDirectory(projectType, componentType);
     const baseFiles = this.getBaseTemplateFiles(componentType);
     const result: TemplateFileInfo[] = [];
     const formattedFileName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
