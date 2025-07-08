@@ -17,6 +17,7 @@ import inquirer from "inquirer";
 import {
   getDefaultFolderForComponentType,
   getDefaultTemplateDirectory,
+  getFilesInFolder,
 } from "../../bin/utils/ProjectScanner";
 import { handleApiComponentType } from "./FolderCreator/FrontendFileCreator/Api";
 import TemplateService from "../services/TemplateService";
@@ -54,22 +55,21 @@ export interface TemplateFileInfo {
 export async function generateFromTemplate(params: {
   projectType: ProjectType;
   componentType: ComponentType | ApiType;
-  projectType: ProjectType;
   fileName: string;
   targetFolder?: string;
-  updateExisting?: boolean;
+  updateExistingTemplateFiles?: boolean;
 }): Promise<{
   createdFiles: string[];
   aiDescription?: string;
   templateFiles: TemplateFileInfo[];
   imports?: { name: string; data: string }[];
 }> {
-  let { componentType, projectType, fileName } = params;
+  let { componentType, projectType, fileName, updateExistingTemplateFiles } = params;
   let targetFolder =
     params.targetFolder ||
     (await getDefaultFolderForComponentType(projectType, componentType));
 
-  // Handle API component type separately
+  // Handle API component type separately as an integration process
   if (componentType === FrontendComponentType.API) {
     const createdFiles = await handleApiComponentType(
       projectType,
@@ -88,19 +88,18 @@ export async function generateFromTemplate(params: {
     return { createdFiles, templateFiles: [] };
   }
 
-  const templateDir = getDefaultTemplateDirectory(projectType, componentType);
-
-  if (!(await fs.pathExists(templateDir))) {
-    throw new Error(
-      `Template directory not found for ${projectType}/${componentType}. ✅ Initialize using skaya init.`
+  let templateFiles=await TemplateService.getTemplateFilesForType(
+      fileName,
+      componentType,
+      projectType,
+    )
+  if (updateExistingTemplateFiles) {
+    templateFiles = await getFilesInFolder(
+      fileName,
+      componentType,
+      projectType,
     );
   }
-
-  let templateFiles = await TemplateService.getTemplateFilesForType(
-    componentType,
-    fileName,
-    templateDir
-  );
 
   const answers = await inquirer.prompt([
     {
@@ -128,6 +127,7 @@ export async function generateFromTemplate(params: {
       projectType,
       componentType,
       templateFiles,
+      updateExistingTemplateFiles,
       importExisting: importExisting,
       componentsToImport: imports,
     });
@@ -188,9 +188,10 @@ async function generateWithAI(params: {
   componentType: ComponentType | ApiType;
   templateFiles: TemplateFileInfo[];
   importExisting?: boolean;
+  updateExistingTemplateFiles?: boolean;
   componentsToImport?: { name: string; data: string }[];
 }): Promise<{ files: TemplateFileInfo[]; description: string }> {
-  const { fileName, projectType, componentType, templateFiles } = params;
+  const { fileName, projectType, componentType, templateFiles,updateExistingTemplateFiles } = params;
 
   const answers = await inquirer.prompt([
     {
@@ -220,6 +221,7 @@ async function generateWithAI(params: {
       aiDescription,
       options,
       templateFiles,
+      updateExistingTemplateFiles,
       {
         importExisting: params.importExisting,
         componentsToImport: params.componentsToImport || [],
