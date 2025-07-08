@@ -147,12 +147,13 @@ export async function updateFile(params: ICreateComponentParams): Promise<void> 
     throw new Error(`Configuration not found for component ${fileName}. Cannot update.`);
   }
 
+  // !dev Use updateExistingTemplateFiles: true or not
   const { createdFiles, aiDescription, imports } = await generateFromTemplate({
     projectType,
     componentType,
     fileName,
     targetFolder,
-    updateExisting: true
+    updateExistingTemplateFiles: true
   });
 
   console.log("imports done",imports);

@@ -10,6 +10,7 @@ import {
   BlokchainComponentType,
 } from "../types/enums";
 import TemplateService from "../../src/services/TemplateService";
+import { TemplateFileInfo } from "../../src/scripts/templateGenerator";
 
 export interface DependencyConfig {
   question: string;
@@ -139,7 +140,8 @@ export async function scanExistingComponents(
  */
 export async function getDefaultFolderForComponentType(
   projectType: ProjectType,
-  componentType?: ComponentType | ApiType
+  componentType?: ComponentType | ApiType,
+  fileName?:string
 ): Promise<string> {
   try {
     const config = await readConfig();
@@ -194,7 +196,9 @@ export async function getDefaultFolderForComponentType(
       );
       return baseSrcPath;
     }
-
+    if(fileName){
+      return `${baseSrcPath}/${componentPath}/${fileName}`;
+    }
     return `${baseSrcPath}/${componentPath}`;
   } catch (error) {
     console.error(
@@ -243,18 +247,18 @@ export const loadComponentConfig = (): ComponentImportConfig => {
 
 
 /**
- * Gets all file names inside a specified folder
+ * Gets all files inside a specified folder with their content
  * @param folderName The name of the folder to scan
  * @param componentType The type of component (page, component, route, etc.)
  * @param projectType The type of project (frontend, backend, blockchain)
- * @returns Promise<string[]> Array of file names in the folder
+ * @returns Promise<TemplateFileInfo[]> Array of file info objects
  * @throws Error when folder cannot be accessed or read
  */
 export async function getFilesInFolder(
   folderName: string,
   componentType: ComponentType | ApiType,
   projectType: ProjectType
-): Promise<string[]> {
+): Promise<TemplateFileInfo[]> {
   // Get the base path for the component type
   const basePath = await getDefaultFolderForComponentType(projectType, componentType);
   const fullPath = path.join(process.cwd(), basePath, folderName);
@@ -270,17 +274,31 @@ export async function getFilesInFolder(
     // Read all files in the directory
     const files = await fs.readdir(fullPath);
 
-    // Filter out directories (only return files)
-    const fileNames: string[] = [];
-    for (const file of files) {
+    // Process each file
+    const fileInfos: Promise<TemplateFileInfo>[] = files.map(async (file) => {
       const filePath = path.join(fullPath, file);
       const stats = await fs.stat(filePath);
+      
       if (stats.isFile()) {
-        fileNames.push(file);
+        const content = await fs.readFile(filePath, 'utf-8');
+        return {
+          originalFileName: file,
+          targetFileName: file, // Keeping same name unless you want to modify
+          content: content
+        };
       }
-    }
+      // For directories, we could return null and filter them out
+      return {
+        originalFileName: file,
+        targetFileName: file,
+        content: undefined // or you might want to skip directories entirely
+      };
+    });
 
-    return fileNames;
+    // Wait for all files to be processed and filter out directories if needed
+    const results = await Promise.all(fileInfos);
+    return results.filter(file => file.content !== undefined);
+
   } catch (error) {
     throw new Error(`Failed to read files in folder "${fullPath}": ${error instanceof Error ? error.message : String(error)}`);
   }
