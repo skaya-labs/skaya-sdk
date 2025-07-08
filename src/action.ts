@@ -156,9 +156,6 @@ export async function updateFile(params: ICreateComponentParams): Promise<void> 
     updateExistingTemplateFiles: true
   });
 
-  console.log("imports done",imports);
-  
-
   // Prepare the update data by merging with existing config
   const updateData: Partial<ComponentConfig> = {
     ...existingConfig, // Keep all existing config properties
