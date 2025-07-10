@@ -118,9 +118,11 @@ skaya init backend
 ```bash
 # Interactive mode
 skaya create
+```
 
+```bash
 # Explicit component creation
-skaya create page --project frontend
+skaya create component --project frontend --filename Profile
 ```
 ### Options
 
@@ -133,8 +135,8 @@ skaya create page --project frontend
 
 # Frontend
 ```
-skaya create component --project frontend
-skaya create page --project frontend
+skaya create component --project frontend --filename ConenctWalletButton
+skaya create page --project frontend --filename ConenctWalletButton
 ```
 
 # Backend

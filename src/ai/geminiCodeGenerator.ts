@@ -278,7 +278,7 @@ ${importsPrompt}
 Import component as : ${componentsUsageExample}
 
 Alwys import components as :
-import ${componentsToImport && componentsToImport[0].name} from '@/components/${componentsToImport && componentsToImport[0].name}/${componentsToImport && componentsToImport[0].name}';
+import ${componentsToImport && componentsToImport[0]?.name} from '@/components/${componentsToImport && componentsToImport[0]?.name}/${componentsToImport && componentsToImport[0]?.name}';
 
 Key Requirements:
 1. Use TypeScript with proper typing
