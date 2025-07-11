@@ -1,12 +1,18 @@
 // src/services/TemplateService.ts
-import { execSync } from 'child_process';
-import fs from 'fs-extra';
-import path from 'path';
-import inquirer from 'inquirer';
-import { ApiType, BackendComponentType, ComponentType, FrontendComponentType, ProjectType } from '../../bin/types/enums';
-import { TemplateFileInfo } from '../scripts/templateGenerator';
-import { promisify } from 'util';
-import { getDefaultTemplateDirectory } from '../../bin/utils/ProjectScanner';
+import { execSync } from "child_process";
+import fs from "fs-extra";
+import path from "path";
+import inquirer from "inquirer";
+import {
+  ApiType,
+  BackendComponentType,
+  ComponentType,
+  FrontendComponentType,
+  ProjectType,
+} from "../../bin/types/enums";
+import { TemplateFileInfo } from "../scripts/templateGenerator";
+import { promisify } from "util";
+import { getDefaultTemplateDirectory } from "../../bin/utils/ProjectScanner";
 
 class TemplateService {
   private templatesConfig: any;
@@ -16,9 +22,12 @@ class TemplateService {
   }
 
   private loadTemplatesConfig() {
-    const configPath = path.join(__dirname, '../../bin/templates/githubTemplates.json');
+    const configPath = path.join(
+      __dirname,
+      "../../bin/templates/githubTemplates.json"
+    );
     if (!fs.existsSync(configPath)) {
-      throw new Error('Template configuration file not found at ' );
+      throw new Error("Template configuration file not found at ");
     }
     this.templatesConfig = require(configPath);
   }
@@ -31,28 +40,31 @@ class TemplateService {
     if (projectType === ProjectType.FRONTEND) {
       const { creationMethod } = await inquirer.prompt([
         {
-          type: 'list',
-          name: 'creationMethod',
-          message: 'How would you like to create your frontend project?',
+          type: "list",
+          name: "creationMethod",
+          message: "How would you like to create your frontend project?",
           choices: [
-            { name: 'Use a framework (React, Next.js, Vite)', value: 'framework' },
-            { name: 'Use a template', value: 'template' }
-          ]
-        }
+            {
+              name: "Use a framework (React, Next.js, Vite)",
+              value: "framework",
+            },
+            { name: "Use a template", value: "template" },
+          ],
+        },
       ]);
 
-      if (creationMethod === 'framework') {
+      if (creationMethod === "framework") {
         const { framework } = await inquirer.prompt([
           {
-            type: 'list',
-            name: 'framework',
-            message: 'Select frontend framework:',
+            type: "list",
+            name: "framework",
+            message: "Select frontend framework:",
             choices: [
-              { name: 'React (via create-react-app)', value: 'react' },
-              { name: 'Next.js', value: 'next' },
-              { name: 'Vite', value: 'vite' }
-            ]
-          }
+              { name: "React (via create-react-app)", value: "react" },
+              { name: "Next.js", value: "next" },
+              { name: "Vite", value: "vite" },
+            ],
+          },
         ]);
         return { templateType: framework };
       }
@@ -60,45 +72,47 @@ class TemplateService {
 
     // For backend or template-based frontend projects
     const categories = this.templatesConfig[`${projectType}Categories`];
-    
+
     if (!categories) {
-      throw new Error(`No templates available for project type: ${projectType}`);
+      throw new Error(
+        `No templates available for project type: ${projectType}`
+      );
     }
 
     const { category } = await inquirer.prompt([
       {
-        type: 'list',
-        name: 'category',
+        type: "list",
+        name: "category",
         message: `Select ${projectType} template category:`,
-        choices: Object.keys(categories).map(cat => ({
+        choices: Object.keys(categories).map((cat) => ({
           name: this.formatCategoryName(cat),
-          value: cat
-        }))
-      }
+          value: cat,
+        })),
+      },
     ]);
 
     const templateChoices = categories[category].map((t: string) => ({
       name: this.formatTemplateName(t),
-      value: t
+      value: t,
     }));
 
     const { templateType } = await inquirer.prompt([
       {
-        type: 'list',
-        name: 'templateType',
+        type: "list",
+        name: "templateType",
         message: `Select a ${projectType} template:`,
-        choices: templateChoices
-      }
+        choices: templateChoices,
+      },
     ]);
 
-    if (templateType === 'custom-repo') {
+    if (templateType === "custom-repo") {
       const { customRepo } = await inquirer.prompt([
         {
-          type: 'input',
-          name: 'customRepo',
-          message: 'Enter GitHub repository URL:',
-          validate: (input: string) => !!input.trim() || 'URL cannot be empty'
-        }
+          type: "input",
+          name: "customRepo",
+          message: "Enter GitHub repository URL:",
+          validate: (input: string) => !!input.trim() || "URL cannot be empty",
+        },
       ]);
       return { templateType, customRepo };
     }
@@ -114,67 +128,79 @@ class TemplateService {
   ): Promise<void> {
     try {
       // Handle framework initialization
-      if (projectType === ProjectType.FRONTEND && 
-          ['react', 'next', 'vite'].includes(templateType)) {
+      if (
+        projectType === ProjectType.FRONTEND &&
+        ["react", "next", "vite"].includes(templateType)
+      ) {
         await this.initializeFramework(templateType, targetPath);
         return;
       }
 
       // Handle template cloning
-      const repoUrl = templateType === 'custom-repo'
-        ? customRepo
-        : this.templatesConfig[projectType][templateType];
+      const repoUrl =
+        templateType === "custom-repo"
+          ? customRepo
+          : this.templatesConfig[projectType][templateType];
 
       if (!repoUrl) {
-        throw new Error(`Repository URL not found for template: ${templateType}`);
+        throw new Error(
+          `Repository URL not found for template: ${templateType}`
+        );
       }
 
-      console.log(`🚀 Cloning ${this.formatTemplateName(templateType)} template...`);
-      execSync(`git clone ${repoUrl} ${targetPath}`, { stdio: 'inherit' });
+      console.log(
+        `🚀 Cloning ${this.formatTemplateName(templateType)} template...`
+      );
+      execSync(`git clone ${repoUrl} ${targetPath}`, { stdio: "inherit" });
 
       // Post-clone setup
       await this.postCloneSetup(targetPath, templateType);
-      
     } catch (error) {
-      throw new Error(`❌ Failed to initialize project: ${error instanceof Error ? error.message : error}`);
+      throw new Error(
+        `❌ Failed to initialize project: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
     }
   }
 
-  private async initializeFramework(framework: string, targetPath: string): Promise<void> {
+  private async initializeFramework(
+    framework: string,
+    targetPath: string
+  ): Promise<void> {
     console.log(`🚀 Initializing ${framework} project...`);
-    
-    switch (framework) {
-      case 'react':
-        execSync(`npx create-react-app ${targetPath}`, { stdio: 'inherit' });
-        break;
-      case 'next':
-            // Construct the npx create-next-app command with recommended settings
-      const nextAppCommand = `npx create-next-app ${targetPath} ` +
-                             `--ts ` + // Enable TypeScript
-                             `--eslint ` + // Enable ESLint
-                             `--src-dir ` + // Enable src/ directory
-                             `--app ` + // Enable App Router
-                             `--import-alias "@/*" ` + // Set import alias to @/*
-                             `--no-turbo`; // Disable Turbopack for better Web3 compatibility
 
-      console.log(`Executing: ${nextAppCommand}`);
-      execSync(nextAppCommand, { stdio: 'inherit' });
-      break;
-      case 'vite':
+    switch (framework) {
+      case "react":
+        execSync(`npx create-react-app ${targetPath}`, { stdio: "inherit" });
+        break;
+      case "next":
+        // Construct the npx create-next-app command with recommended settings
+        const nextAppCommand =
+          `npx create-next-app ${targetPath} ` +
+          `--ts ` + // Enable TypeScript
+          `--eslint ` + // Enable ESLint
+          `--src-dir ` + // Enable src/ directory
+          `--app ` + // Enable App Router
+          `--import-alias "@/*" ` + // Set import alias to @/*
+          `--no-turbo`; // Disable Turbopack for better Web3 compatibility
+
+        console.log(`Executing: ${nextAppCommand}`);
+        execSync(nextAppCommand, { stdio: "inherit" });
+        break;
+      case "vite":
         const { viteTemplate } = await inquirer.prompt([
           {
-            type: 'list',
-            name: 'viteTemplate',
-            message: 'Select Vite template:',
-            choices: [
-              'react-ts',
-              'react',
-              'vanilla-ts',
-              'vanilla'
-            ]
-          }
+            type: "list",
+            name: "viteTemplate",
+            message: "Select Vite template:",
+            choices: ["react-ts", "react", "vanilla-ts", "vanilla"],
+          },
         ]);
-        execSync(`npm create vite@latest ${targetPath} -- --template ${viteTemplate}`, { stdio: 'inherit' });
+        execSync(
+          `npm create vite@latest ${targetPath} -- --template ${viteTemplate}`,
+          { stdio: "inherit" }
+        );
         break;
       default:
         throw new Error(`Unsupported framework: ${framework}`);
@@ -183,35 +209,42 @@ class TemplateService {
     console.log(`✅ Successfully initialized ${framework} project`);
   }
 
-  private async postCloneSetup(targetPath: string, templateType: string): Promise<void> {
+  private async postCloneSetup(
+    targetPath: string,
+    templateType: string
+  ): Promise<void> {
     // Remove .git to detach history
-    await fs.remove(path.join(targetPath, '.git'));
-    
+    await fs.remove(path.join(targetPath, ".git"));
+
     // Initialize new git repo
     process.chdir(targetPath);
-    execSync('git init', { stdio: 'inherit' });
-    
+    execSync("git init", { stdio: "inherit" });
+
     // Add all files and make initial commit
     // execSync('git add .', { stdio: 'inherit' });
     // execSync('git commit -m "skaya init"', { stdio: 'inherit' });
-    process.chdir('..');
+    process.chdir("..");
 
-    console.log(`✅ Successfully initialized project with ${this.formatTemplateName(templateType)} template`);
+    console.log(
+      `✅ Successfully initialized project with ${this.formatTemplateName(
+        templateType
+      )} template`
+    );
   }
 
   private formatCategoryName(category: string): string {
     return category
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   }
 
   private formatTemplateName(template: string): string {
     return template
-      .replace('skaya-', '')
-      .split('-')
-      .map(word => word.toUpperCase())
-      .join(' ');
+      .replace("skaya-", "")
+      .split("-")
+      .map((word) => word.toUpperCase())
+      .join(" ");
   }
 
   /**
@@ -234,11 +267,16 @@ class TemplateService {
 
     for (const templateFile of templateFiles) {
       let content = templateFile.content;
-      if (!content){
-        throw new Error(`Template file ${templateFile.originalFileName} is empty.`);
+      if (!content) {
+        throw new Error(
+          `Template file ${templateFile.originalFileName} is empty.`
+        );
       }
       // Handle the special Storybook 'component: Component' case
-      content = content.replace(/component: Component/g, `component: ${fileName}`);
+      content = content.replace(
+        /component: Component/g,
+        `component: ${fileName}`
+      );
 
       // Do general replacements
       content = content
@@ -246,7 +284,10 @@ class TemplateService {
         .replace(/{{Component}}/g, fileName)
         .replace(/{{COMPONENT}}/g, fileName.toUpperCase())
         .replace(
-          new RegExp(`(?<!React\\.)(\\b|_)${componentType}(?![:])(\\b|_)`, 'gi'),
+          new RegExp(
+            `(?<!React\\.)(\\b|_)${componentType}(?![:])(\\b|_)`,
+            "gi"
+          ),
           (match) => fileName
         );
 
@@ -255,8 +296,13 @@ class TemplateService {
       if (componentType === FrontendComponentType.PAGE) {
         targetFileName = `${targetFileName}Page`;
       }
-      
-      const targetPath = path.join(process.cwd(), targetFolder, targetFileName, templateFile.targetFileName);
+
+      const targetPath = path.join(
+        process.cwd(),
+        targetFolder,
+        targetFileName,
+        templateFile.targetFileName
+      );
       await fs.outputFile(targetPath, content);
       createdFiles.push(targetPath);
     }
@@ -274,31 +320,37 @@ class TemplateService {
   public async getTemplateFilesForType(
     fileName: string,
     componentType: ComponentType | ApiType,
-    projectType: ProjectType,
+    projectType: ProjectType
   ): Promise<TemplateFileInfo[]> {
-
-    const templateDir=await getDefaultTemplateDirectory(projectType, componentType);
+    const templateDir = await getDefaultTemplateDirectory(
+      projectType,
+      componentType
+    );
     const baseFiles = this.getBaseTemplateFiles(componentType);
     const result: TemplateFileInfo[] = [];
-    const formattedFileName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
+    const formattedFileName =
+      fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
 
     for (const file of baseFiles) {
-      const targetFileName = file.replace(new RegExp(componentType, 'gi'), formattedFileName);
+      const targetFileName = file.replace(
+        new RegExp(componentType, "gi"),
+        formattedFileName
+      );
       const filePath = path.join(templateDir, file);
 
       try {
-        const content = await promisify(fs.readFile)(filePath, 'utf-8');
+        const content = await promisify(fs.readFile)(filePath, "utf-8");
         result.push({
           originalFileName: file,
           targetFileName,
-          content
+          content,
         });
       } catch (error) {
         console.error(`Error reading template file ${filePath}:`, error);
         result.push({
           originalFileName: file,
           targetFileName,
-          content: '' // Fallback empty content if file can't be read
+          content: "", // Fallback empty content if file can't be read
         });
       }
     }
@@ -306,38 +358,42 @@ class TemplateService {
     return result;
   }
 
-  public getBaseTemplateFiles(componentType: ComponentType | ApiType): string[] {
+  public getBaseTemplateFiles(
+    componentType: ComponentType | ApiType
+  ): string[] {
     switch (componentType) {
       case FrontendComponentType.COMPONENT:
         return [
           `${FrontendComponentType.COMPONENT}.tsx`,
           `${FrontendComponentType.COMPONENT}.stories.tsx`,
           `${FrontendComponentType.COMPONENT}.test.tsx`,
-          `${FrontendComponentType.COMPONENT}.css`
+          `${FrontendComponentType.COMPONENT}.css`,
         ];
       case FrontendComponentType.PAGE:
         return [
           `${FrontendComponentType.PAGE}.tsx`,
           `${FrontendComponentType.PAGE}.test.tsx`,
-          `${FrontendComponentType.PAGE}.css`
+          `${FrontendComponentType.PAGE}.css`,
         ];
       case FrontendComponentType.API:
-        return [`${FrontendComponentType.API}Slice.tsx`,"backendRequest.ts"];
+        return [`${FrontendComponentType.API}Slice.tsx`, "backendRequest.ts"];
       case ApiType.REDUX:
-        return [ 'redux/store.tsx', 'redux/storeProvider.tsx'];
+        return ["redux/store.tsx", "redux/storeProvider.tsx"];
       case BackendComponentType.ROUTE:
         return [
           `${BackendComponentType.ROUTE}.ts`,
-          `${BackendComponentType.ROUTE}.test.ts`
+          `${BackendComponentType.ROUTE}.test.ts`,
         ];
       case BackendComponentType.CONTROLLER:
         return [
           `${BackendComponentType.CONTROLLER}.ts`,
-          `${BackendComponentType.CONTROLLER}.test.ts`
+          `${BackendComponentType.CONTROLLER}.test.ts`,
         ];
       default:
         const exhaustiveCheck: any = componentType;
-        throw new Error(`Unhandled component type for getTemplateFilesForType: ${exhaustiveCheck}`);
+        throw new Error(
+          `Unhandled component type for getTemplateFilesForType: ${exhaustiveCheck}`
+        );
     }
   }
 }
