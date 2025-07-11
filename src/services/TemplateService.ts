@@ -148,8 +148,18 @@ class TemplateService {
         execSync(`npx create-react-app ${targetPath}`, { stdio: 'inherit' });
         break;
       case 'next':
-        execSync(`npx create-next-app ${targetPath}`, { stdio: 'inherit' });
-        break;
+            // Construct the npx create-next-app command with recommended settings
+      const nextAppCommand = `npx create-next-app ${targetPath} ` +
+                             `--ts ` + // Enable TypeScript
+                             `--eslint ` + // Enable ESLint
+                             `--src-dir ` + // Enable src/ directory
+                             `--app ` + // Enable App Router
+                             `--import-alias "@/*" ` + // Set import alias to @/*
+                             `--no-turbo`; // Disable Turbopack for better Web3 compatibility
+
+      console.log(`Executing: ${nextAppCommand}`);
+      execSync(nextAppCommand, { stdio: 'inherit' });
+      break;
       case 'vite':
         const { viteTemplate } = await inquirer.prompt([
           {
