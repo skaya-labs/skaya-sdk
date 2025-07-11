@@ -172,7 +172,7 @@ class TemplateService {
 
     switch (framework) {
       case "react":
-        execSync(`npx create-react-app ${targetPath}`, { stdio: "inherit" });
+        execSync(`npx create-react-app ${targetPath} --template typescript`, { stdio: 'inherit' });
         break;
       case "next":
         // Construct the npx create-next-app command with recommended settings
