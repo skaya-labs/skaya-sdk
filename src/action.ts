@@ -197,98 +197,97 @@ function areImportsEqual(
 
 
 /**
- * Starts development environments for multiple project types
- * @param {ProjectType[]} projectTypes - Array of project types to start
+ * Starts development environments showing all available scripts
+ * @param {ProjectType[]} projectTypes - Array of project types to check
  */
 export async function startProjects(projectTypes: ProjectType[]): Promise<void> {
   try {
-    console.log(`🚀 Starting ${projectTypes.length > 1 ? 'multiple' : ''} development environment(s)...`);
+    console.log('🚀 Available development scripts:');
 
     // Read global config
     const config = await readConfig();
+    const allScripts: {
+      projectType: ProjectType;
+      projectName: string;
+      scriptName: string;
+      scriptCommand: string;
+      path: string;
+    }[] = [];
 
-    // Prepare all processes
-    const processes = await Promise.all(projectTypes.map(async (projectType) => {
+    // Collect all available scripts from all projects
+    for (const projectType of projectTypes) {
       // Determine project directory
       let projectDir = process.cwd();
       const projectConfig = getProjectConfig(config, projectType);
-      
+      const projectName = projectConfig?.name || projectType.toLowerCase();
+
       if (projectConfig?.name) {
-        projectDir = path.join(process.cwd(), projectConfig?.name);
-      } else {
-        console.warn(`⚠️ No project name configured for ${projectType}. `);
-        return null;
+        projectDir = path.join(process.cwd(), projectConfig.name);
       }
 
       // Check if directory exists
       if (!fs.existsSync(projectDir)) {
         console.warn(`⚠️  ${projectType} project directory not found at: ${projectDir}`);
-        return null;
+        continue;
       }
 
       // Read package.json
       const packageJsonPath = path.join(projectDir, 'package.json');
       if (!fs.existsSync(packageJsonPath)) {
         console.warn(`⚠️  No package.json found in ${projectType} project at: ${projectDir}`);
-        return null;
+        continue;
       }
 
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
       const scripts = packageJson.scripts || {};
 
-      // Determine available commands
-      const defaultCommands: Record<ProjectType, string[]> = {
-        [ProjectType.FRONTEND]: ['dev', 'start', 'serve'],
-        [ProjectType.BACKEND]: ['start:dev', 'dev', 'start'],
-        [ProjectType.BLOCKCHAIN]: ['node', 'start', 'dev']
-      };
-
-      // Find available scripts
-      const availableCommands = defaultCommands[projectType].filter(cmd => scripts[cmd]);
-
-      if (availableCommands.length === 0) {
-        console.warn(`⚠️  No recognized scripts found in ${projectType} project package.json`);
-        return null;
+      // Add all scripts to the list
+      for (const [scriptName, scriptCommand] of Object.entries(scripts)) {
+        allScripts.push({
+          projectType,
+          projectName,
+          scriptName,
+          scriptCommand: scriptCommand as string,
+          path: projectDir
+        });
       }
+    }
 
-      // Let user select which command to run if multiple available
-      let selectedCommand = availableCommands[0];
-      if (availableCommands.length > 1) {
-        const { command } = await inquirer.prompt([
-          {
-            type: 'list',
-            name: 'command',
-            message: `Select command to run for ${projectType}:`,
-            choices: availableCommands.map(cmd => ({
-              name: `${cmd} (${scripts[cmd]})`,
-              value: cmd
-            }))
-          }
-        ]);
-        selectedCommand = command;
-      }
-
-      console.log(`🏃 Starting ${projectType} with: npm run ${selectedCommand}`);
-      return execa('npm', ['run', selectedCommand], {
-        cwd: projectDir,
-        stdio: 'inherit',
-        shell: true
-      });
-    }));
-
-    // Filter out null values (failed projects)
-    const validProcesses = processes.filter(p => p !== null) as unknown[];
-
-    if (validProcesses.length === 0) {
-      console.error('❌ No valid projects to start');
+    if (allScripts.length === 0) {
+      console.error('❌ No scripts found in any project');
       return;
     }
 
+    // Let user select which scripts to run
+    const { scriptsToRun } = await inquirer.prompt([
+      {
+        type: 'checkbox',
+        name: 'scriptsToRun',
+        message: 'Select scripts to run:',
+        choices: allScripts.map(script => ({
+          name: `${script.projectType} (${script.projectName}): ${script.scriptName} - ${script.scriptCommand}`,
+          value: script,
+          short: `${script.projectType}: ${script.scriptName}`
+        })),
+        validate: (input) => input.length > 0 || 'You must select at least one script'
+      }
+    ]);
+
+    // Start all selected scripts
+    const processes = scriptsToRun.map((script: typeof allScripts[0]) => {
+      console.log(`🏃 Starting ${script.projectType} (${script.projectName}) with: npm run ${script.scriptName}`);
+      return execa('npm', ['run', script.scriptName], {
+        cwd: script.path,
+        stdio: 'inherit',
+        shell: true
+      });
+    });
+
     // Wait for all processes
-    await Promise.all(validProcesses);
+    await Promise.all(processes);
     
   } catch (error) {
-    console.error(`❌ Failed to start projects:`);
+    console.error('❌ Failed to start projects:');
     throw error;
   }
 }
