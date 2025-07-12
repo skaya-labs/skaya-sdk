@@ -215,7 +215,7 @@ export async function startProjects(projectTypes: ProjectType[]): Promise<void> 
       
       if (projectConfig?.name) {
         projectDir = path.join(process.cwd(), projectConfig?.name);
-      } else if (projectType !== ProjectType.FRONTEND) {
+      } else {
         console.warn(`⚠️ No project name configured for ${projectType}. `);
         return null;
       }
@@ -306,5 +306,75 @@ function getProjectConfig(config: Config, projectType: ProjectType): ProjectConf
       return config.blockchain;
     default:
       return undefined;
+  }
+}
+
+/**
+ * Installs components for specified project types
+ * @param {ProjectType[]} projectTypes - Array of project types to install components for
+ */
+export async function installComponents(projectTypes: ProjectType[]): Promise<void> {
+  try {
+    console.log(`📦 Installing dependencies for: ${projectTypes.join(', ')}`);
+    
+    // Read global config first
+    const config = await readConfig();
+    const results: Record<string, boolean> = {};
+    
+    for (const projectType of projectTypes) {
+      try {
+        console.log(`\n🔧 Starting ${projectType} installation...`);
+        
+        // Get project directory from config
+        let projectDir = process.cwd();
+        const projectConfig = getProjectConfig(config, projectType);
+        
+        if (projectConfig?.name) {
+          projectDir = path.join(process.cwd(), projectConfig.name);
+        } else if (projectType !== ProjectType.FRONTEND) {
+          console.warn(`⚠️ No project name configured for ${projectType}. Using current directory.`);
+        }
+
+        // Verify project directory exists
+        if (!fs.existsSync(projectDir)) {
+          throw new Error(`Project directory not found: ${projectDir}`);
+        }
+
+        // Check for package.json
+        const packageJsonPath = path.join(projectDir, 'package.json');
+        if (!fs.existsSync(packageJsonPath)) {
+          throw new Error(`No package.json found in ${projectDir}`);
+        }
+
+        console.log(`Running npm install in directory: ${projectDir}`);
+
+        // Execute installation
+        await execa('npm', ['install'], {
+          stdio: 'inherit',
+          cwd: projectDir,
+          shell: true
+        });
+        
+        results[projectType] = true;
+        console.log(`✅ ${projectType} dependencies installed successfully`);
+      } catch (error) {
+        results[projectType] = false;
+        console.error(`❌ Failed to install ${projectType} dependencies:`, error);
+      }
+    }
+    
+    // Print summary
+    console.log('\n📊 Installation Summary:');
+    for (const [type, success] of Object.entries(results)) {
+      console.log(`  ${type}: ${success ? '✅ Success' : '❌ Failed'}`);
+    }
+    
+    // Throw error if any installations failed
+    if (Object.values(results).some(success => !success)) {
+      throw new Error('Some installations failed');
+    }
+  } catch (error) {
+    console.error('❌ Installation failed:');
+    throw error;
   }
 }

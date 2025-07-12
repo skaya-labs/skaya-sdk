@@ -7,7 +7,7 @@
  */
 
 import { Command } from "commander";
-import { createProject, createFile, updateFile, startProjects } from "../src/action";
+import { createProject, createFile, updateFile, startProjects, installComponents } from "../src/action";
 import { ProjectType, ComponentType, FrontendComponentType, BackendComponentType, BlokchainComponentType } from "./types/enums";
 import { ICommandOptions, ICreateComponentParams } from "./types/interfaces";
 import { isValidProjectType, isValidFrontendComponent, isValidBackendComponent } from "./utils/validator";
@@ -283,6 +283,67 @@ program
       await startProjects(projectTypes);
     } catch (error) {
       handleCliError(error as Error, "project startup");
+    }
+  });
+
+
+// Installation command
+program
+  .command("install")
+  .description("Install project components (frontend, backend, blockchain, or all)")
+  .option("-a, --all", "Install all components (frontend, backend, blockchain)")
+  .option("-f, --frontend", "Install frontend components")
+  .option("-b, --backend", "Install backend components")
+  .option("-c, --blockchain", "Install blockchain components")
+  .action(async (options: { 
+    all?: boolean;
+    frontend?: boolean;
+    backend?: boolean;
+    blockchain?: boolean;
+  }) => {
+    try {
+      let projectTypes: ProjectType[] = [];
+
+      if (options.all) {
+        projectTypes = [
+          ProjectType.FRONTEND,
+          ProjectType.BACKEND,
+          ProjectType.BLOCKCHAIN
+        ];
+      } else {
+        // If no specific options provided, prompt the user
+        if (!options.frontend && !options.backend && !options.blockchain) {
+          const answers = await inquirer.prompt([
+            {
+              type: 'checkbox',
+              name: 'components',
+              message: 'Which components would you like to install?',
+              choices: [
+                { name: 'Frontend', value: ProjectType.FRONTEND },
+                { name: 'Backend', value: ProjectType.BACKEND },
+                { name: 'Blockchain', value: ProjectType.BLOCKCHAIN }
+              ],
+              validate: (input) => input.length > 0 || 'You must select at least one component'
+            }
+          ]);
+          projectTypes = answers.components;
+        } else {
+          // Add selected components based on flags
+          if (options.frontend) projectTypes.push(ProjectType.FRONTEND);
+          if (options.backend) projectTypes.push(ProjectType.BACKEND);
+          if (options.blockchain) projectTypes.push(ProjectType.BLOCKCHAIN);
+        }
+      }
+
+      if (projectTypes.length === 0) {
+        throw new Error('No components selected for installation');
+      }
+
+      await installComponents(projectTypes);
+      
+      console.log('✅ Installation completed successfully');
+    } catch (error) {
+      handleCliError(error as Error, "component installation");
     }
   });
 
