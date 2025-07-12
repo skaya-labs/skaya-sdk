@@ -172,7 +172,9 @@ class TemplateService {
 
     switch (framework) {
       case "react":
-        execSync(`npx create-react-app ${targetPath} --template typescript`, { stdio: 'inherit' });
+        execSync(`npx create-react-app ${targetPath} --template typescript`, {
+          stdio: "inherit",
+        });
         break;
       case "next":
         // Construct the npx create-next-app command with recommended settings
@@ -197,8 +199,19 @@ class TemplateService {
             choices: ["react-ts", "react", "vanilla-ts", "vanilla"],
           },
         ]);
+
+        // Ensure target directory exists
+        await fs.ensureDir(targetPath);
+
+        // Get just the directory name (last part of path)
+        const dirName = path.basename(targetPath);
+
+        // Run command in parent directory
+        const parentDir = path.dirname(targetPath);
+        process.chdir(parentDir);
+
         execSync(
-          `npm create vite@latest ${targetPath} -- --template ${viteTemplate}`,
+          `npm create vite@latest ${dirName} -- --template ${viteTemplate}`,
           { stdio: "inherit" }
         );
         break;
