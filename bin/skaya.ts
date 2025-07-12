@@ -7,7 +7,7 @@
  */
 
 import { Command } from "commander";
-import { createProject, createFile, updateFile } from "../src/action";
+import { createProject, createFile, updateFile, startProjects } from "../src/action";
 import { ProjectType, ComponentType, FrontendComponentType, BackendComponentType, BlokchainComponentType } from "./types/enums";
 import { ICommandOptions, ICreateComponentParams } from "./types/interfaces";
 import { isValidProjectType, isValidFrontendComponent, isValidBackendComponent } from "./utils/validator";
@@ -46,7 +46,7 @@ program
             choices: [
               { name: 'Frontend', value: ProjectType.FRONTEND },
               { name: 'Backend', value: ProjectType.BACKEND },
-              { name: 'Smart Contract', value: ProjectType.BLOCKCHAIN }
+              { name: 'Blockchain', value: ProjectType.BLOCKCHAIN }
             ],
           }
         ]);
@@ -253,6 +253,36 @@ program
       console.log(`✅ Successfully updated ${componentType} component: ${selectedComponent}`);
     } catch (error) {
       handleCliError(error as Error, "component update");
+    }
+  });
+
+  program
+  .command("start")
+  .description("Start development environment(s) for your project(s)")
+  .option("-a, --all", "Start all project types (frontend, backend, blockchain)")
+  .action(async (options: { all?: boolean }) => {
+    try {
+      let projectTypes: ProjectType[];
+      
+        const { selectedTypes } = await inquirer.prompt([
+          {
+            type: 'checkbox',
+            name: 'selectedTypes',
+            message: 'Which project types do you want to start?',
+            choices: Object.values(ProjectType).map(type => ({
+              name: type,
+              value: type,
+              checked: options.all // Select all if --all flag is used
+            })),
+            validate: (input) => input.length > 0 || 'You must select at least one project type'
+          }
+        ]);
+        projectTypes = selectedTypes;
+   
+      // Start all selected projects
+      await startProjects(projectTypes);
+    } catch (error) {
+      handleCliError(error as Error, "project startup");
     }
   });
 

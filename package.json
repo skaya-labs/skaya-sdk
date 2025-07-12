@@ -1,6 +1,6 @@
 {
   "name": "skaya",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "main": "src/action.js",
   "types": "src/action.d.ts",
   "description": "CLI SDK for full-stack automation: scaffold frontend, backend & blockchain. Future-ready for Web3, integrations, server components & logging.",
@@ -21,6 +21,7 @@
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "dotenv": "^16.4.7",
+    "execa": "^9.6.0",
     "fs-extra": "^11.3.0",
     "inquirer": "^12.5.0",
     "openai": "^4.91.1",

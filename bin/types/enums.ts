@@ -36,7 +36,7 @@ export enum BackendComponentType {
 
 
 /**
- * Smart Contract component type enumeration
+ * Blockchain component type enumeration
  */
 export enum BlokchainComponentType {
   CONTRACT = "contract",

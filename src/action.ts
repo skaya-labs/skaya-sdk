@@ -15,11 +15,15 @@ import {
   saveProjectConfig,
   updateComponentReferences,
   getProjectComponentConfig, 
-  ComponentConfig 
+  ComponentConfig, 
+  readConfig,
+  Config,
+  ProjectConfig
 } from "../bin/utils/configLogger";
 import { generateFromTemplate } from "./scripts/templateGenerator";
 import TemplateService from "./services/TemplateService";
 import { getDefaultFolderForComponentType } from "../bin/utils/ProjectScanner";
+import { execa } from 'execa';
 
 /**
  * Creates a new project scaffold
@@ -36,7 +40,7 @@ export async function createProject(projectType: ProjectType): Promise<void> {
     },
   ]);
 
-  // todo: Add for backend and smart contract components
+  // todo: Add for backend and blockchain components
 
   if (
     projectType === ProjectType.BACKEND ||
@@ -87,7 +91,7 @@ export async function createFile(
     },
   ]);
 
-  // todo: Add for backend and smart contract components
+  // todo: Add for backend and blockchain components
   if (
     projectType === ProjectType.BACKEND ||
     projectType === ProjectType.BLOCKCHAIN
@@ -189,4 +193,118 @@ function areImportsEqual(
   const bNames = importsB.map(i => i.name).sort();
 
   return JSON.stringify(aNames) === JSON.stringify(bNames);
+}
+
+
+/**
+ * Starts development environments for multiple project types
+ * @param {ProjectType[]} projectTypes - Array of project types to start
+ */
+export async function startProjects(projectTypes: ProjectType[]): Promise<void> {
+  try {
+    console.log(`🚀 Starting ${projectTypes.length > 1 ? 'multiple' : ''} development environment(s)...`);
+
+    // Read global config
+    const config = await readConfig();
+
+    // Prepare all processes
+    const processes = await Promise.all(projectTypes.map(async (projectType) => {
+      // Determine project directory
+      let projectDir = process.cwd();
+      const projectConfig = getProjectConfig(config, projectType);
+      
+      if (projectConfig?.name) {
+        projectDir = path.join(process.cwd(), projectConfig?.name);
+      } else if (projectType !== ProjectType.FRONTEND) {
+        console.warn(`⚠️ No project name configured for ${projectType}. `);
+        return null;
+      }
+
+      // Check if directory exists
+      if (!fs.existsSync(projectDir)) {
+        console.warn(`⚠️  ${projectType} project directory not found at: ${projectDir}`);
+        return null;
+      }
+
+      // Read package.json
+      const packageJsonPath = path.join(projectDir, 'package.json');
+      if (!fs.existsSync(packageJsonPath)) {
+        console.warn(`⚠️  No package.json found in ${projectType} project at: ${projectDir}`);
+        return null;
+      }
+
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+      const scripts = packageJson.scripts || {};
+
+      // Determine available commands
+      const defaultCommands: Record<ProjectType, string[]> = {
+        [ProjectType.FRONTEND]: ['dev', 'start', 'serve'],
+        [ProjectType.BACKEND]: ['start:dev', 'dev', 'start'],
+        [ProjectType.BLOCKCHAIN]: ['node', 'start', 'dev']
+      };
+
+      // Find available scripts
+      const availableCommands = defaultCommands[projectType].filter(cmd => scripts[cmd]);
+
+      if (availableCommands.length === 0) {
+        console.warn(`⚠️  No recognized scripts found in ${projectType} project package.json`);
+        return null;
+      }
+
+      // Let user select which command to run if multiple available
+      let selectedCommand = availableCommands[0];
+      if (availableCommands.length > 1) {
+        const { command } = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'command',
+            message: `Select command to run for ${projectType}:`,
+            choices: availableCommands.map(cmd => ({
+              name: `${cmd} (${scripts[cmd]})`,
+              value: cmd
+            }))
+          }
+        ]);
+        selectedCommand = command;
+      }
+
+      console.log(`🏃 Starting ${projectType} with: npm run ${selectedCommand}`);
+      return execa('npm', ['run', selectedCommand], {
+        cwd: projectDir,
+        stdio: 'inherit',
+        shell: true
+      });
+    }));
+
+    // Filter out null values (failed projects)
+    const validProcesses = processes.filter(p => p !== null) as unknown[];
+
+    if (validProcesses.length === 0) {
+      console.error('❌ No valid projects to start');
+      return;
+    }
+
+    // Wait for all processes
+    await Promise.all(validProcesses);
+    
+  } catch (error) {
+    console.error(`❌ Failed to start projects:`);
+    throw error;
+  }
+}
+
+/**
+ * Helper function to get project config based on project type
+ */
+function getProjectConfig(config: Config, projectType: ProjectType): ProjectConfig | undefined {
+  switch (projectType) {
+    case ProjectType.FRONTEND:
+      return config.frontend;
+    case ProjectType.BACKEND:
+      return config.backend;
+    case ProjectType.BLOCKCHAIN:
+      return config.blockchain;
+    default:
+      return undefined;
+  }
 }

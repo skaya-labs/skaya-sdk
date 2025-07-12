@@ -11,7 +11,7 @@ const DEFAULT_PROJECT_NAME = 'SkayaProject'; // Moved to a constant
 /**
  * Interface for a single project's configuration (e.g., frontend, backend).
  */
-interface ProjectConfig {
+export interface ProjectConfig {
   name: string;
   template: string;
   createdAt?: string; // Added for consistency with saveProjectConfig
@@ -22,10 +22,10 @@ interface ProjectConfig {
 /**
  * Interface for the overall configuration structure.
  */
-interface Config {
+export interface Config {
   frontend?: ProjectConfig;
   backend?: ProjectConfig;
-  smartContract?: ProjectConfig;
+  blockchain?: ProjectConfig;
   [key: string]: any; // Allow for additional project types
 }
 
@@ -47,7 +47,7 @@ export interface ComponentConfig {
 
 
 /**
- * Saves project type (frontend/backend/smartContract) to skaya.config.json.
+ * Saves project type (frontend/backend/blockchain) to skaya.config.json.
  * This function creates or updates the top-level project configuration.
  * @param projectType - Project type (e.g., ProjectType.Frontend, ProjectType.Backend)
  * @param name - Name of the project

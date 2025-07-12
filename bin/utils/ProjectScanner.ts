@@ -157,9 +157,9 @@ export async function getDefaultFolderForComponentType(
 
     // Initialize missing configurations with defaults
     const configMap = {
-      [ProjectType.FRONTEND]: config.frontend,
-      [ProjectType.BACKEND]: config.backend,
-      [ProjectType.BLOCKCHAIN]: config.smartContract,
+      [ProjectType.FRONTEND]: config?.frontend,
+      [ProjectType.BACKEND]: config?.backend,
+      [ProjectType.BLOCKCHAIN]: config?.blockchain,
     };
 
     if (!configMap[projectType]) {
