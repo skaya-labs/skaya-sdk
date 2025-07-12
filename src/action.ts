@@ -55,8 +55,6 @@ export async function createProject(projectType: ProjectType): Promise<void> {
     throw new Error(`Folder ${folder} already exists.`);
   }
 
-  await fs.ensureDir(targetPath);
-
   // Create basic project structure based on type
   const { templateType, customRepo } =
     await TemplateService.promptTemplateSelection(projectType);
